@@ -1,0 +1,544 @@
+import React, { useMemo, useState } from "react";
+
+/**
+ * Guía de Estudio Español (SPA en React)
+ * - Página principal con video de resumen (enlazado a GitHub RAW o similar)
+ * - 8 secciones con resúmenes claros para un(a) estudiante de 14 años
+ * - Quiz por sección (5 preguntas, aleatorio cada vez)
+ * - Quiz General (20 preguntas de todo el material, aleatorio cada vez)
+ *
+ * 👉 Instrucciones rápidas
+ * 1) Cambia VIDEO_URL por el enlace RAW del video en tu GitHub.
+ * 2) Si lo deseas, agrega más preguntas a cada banco (respetando el formato).
+ * 3) Exporta este archivo como un único componente y prévisualo.
+ */
+
+// ←— Cambia este enlace por el RAW del video de tu repo GitHub
+const VIDEO_URL = "https://raw.githubusercontent.com/tu-usuario/tu-repo/main/video_resumen.mp4";
+
+// Utilidad: barajar array (Fisher–Yates)
+function shuffleArray<T>(arr: T[]): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+// Tipos
+type Question = {
+  prompt: string;
+  options: string[];
+  answerIndex: number;
+  explanation?: string;
+};
+
+type SectionKey =
+  | "seccion1"
+  | "seccion2"
+  | "seccion3"
+  | "seccion4"
+  | "seccion5"
+  | "seccion6"
+  | "seccion7"
+  | "seccion8";
+
+
+type Page = { type: "home" } | { type: "section"; key: SectionKey } | { type: "generalQuiz" };
+
+// —— Banco de preguntas por sección —— //
+// Botón 1: TEMA 1 Y 2. TEXTOS DESCRIPTIVOS, EXPOSITIVOS Y ARGUMENTATIVOS.
+const bank1: Question[] = [
+  { prompt: "¿Cuál es el propósito principal de un texto expositivo?", options: ["Persuadir al lector", "Informar de forma objetiva", "Provocar emociones", "Narrar en primera persona"], answerIndex: 1, explanation: "El texto expositivo busca informar de forma objetiva y clara." },
+  { prompt: "En un texto argumentativo, la tesis es…", options: ["Un dato verificado", "La opinión que se defiende", "Una anécdota", "El título del texto"], answerIndex: 1, explanation: "La tesis es la postura u opinión central que el autor intenta sostener." },
+  { prompt: "¿Qué diferencia a la idea principal de una idea secundaria?", options: ["La principal adorna; la secundaria da sentido", "La principal es el núcleo; la secundaria amplía o explica", "La secundaria es más importante", "No hay diferencia"], answerIndex: 1 },
+  { prompt: "Un ejemplo de conector de contraste es…", options: ["Además", "Por lo tanto", "Sin embargo", "Luego"], answerIndex: 2 },
+  { prompt: "Identifica la opción que muestra información sustentada:", options: ["Creo que los videojuegos son malos", "Un estudio reportó que el 60% juega a diario", "En mi opinión, estudiar es aburrido", "A mí me parece que leer cansa"], answerIndex: 1 },
+  { prompt: "¿Cuál de estos recursos ayuda a organizar y clarificar información?", options: ["Metáforas complejas", "Tablas e imágenes pertinentes", "Rimas y versos", "Onomatopeyas"], answerIndex: 1 },
+  { prompt: "Un texto argumentativo típico se organiza en…", options: ["Planteamiento, nudo y desenlace", "Introducción (tesis), cuerpo (argumentos) y conclusión", "Inicio, desarrollo libre", "Solo citas de autoridad"], answerIndex: 1 },
+  { prompt: "¿Qué función cumplen los ejemplos en un texto expositivo?", options: ["Emocionar", "Embellecer", "Aclarar conceptos y hacerlos comprensibles", "Crear rima"], answerIndex: 2 },
+];
+
+// Botón 2: TEMA 3. ESTRUCTURA DE UNA NARRACIÓN Y UNA OBRA DRAMÁTICA.
+const bank2: Question[] = [
+  { prompt: "La estructura clásica de la narración es…", options: ["Exposición, refutación, conclusión", "Introducción, nudo y desenlace", "Actos y escenas", "Planteamiento único"], answerIndex: 1 },
+  { prompt: "¿Cuál de las siguientes NO es una función del narrador?", options: ["Contar hechos", "Describir escenarios", "Actuar como personaje en escena con acotaciones", "Presentar la perspectiva de la historia"], answerIndex: 2 },
+  { prompt: "En una obra dramática, las acotaciones sirven para…", options: ["Introducir rimas", "Indicar acciones, gestos y ambiente escénico", "Explicar la voz del narrador", "Dar bibliografía"], answerIndex: 1 },
+  { prompt: "El conflicto en una narración…", options: ["No importa", "Es el choque de fuerzas que impulsa la trama", "Solo existe en la poesía", "Es un recurso de puntuación"], answerIndex: 1 },
+  { prompt: "Una obra dramática se organiza en…", options: ["Capítulos", "Actos y escenas", "Versos", "Partes libres"], answerIndex: 1 },
+  { prompt: "El monólogo en el drama se usa para…", options: ["Describir paisajes", "Mostrar pensamientos internos de un personaje", "Anunciar el título", "Cambiar el narrador"], answerIndex: 1 },
+];
+
+// Botón 3: TEMA 4. FUNCIONES ESTÉTICAS Y SIMBÓLICAS.
+const bank3: Question[] = [
+  { prompt: "Una función estética de los recursos literarios es…", options: ["Probar científicamente", "Embellecer el texto y crear atmósfera", "Traducir datos", "Definir leyes"], answerIndex: 1 },
+  { prompt: "Una función simbólica consiste en…", options: ["Hacer reír", "Dar significados más profundos (paloma = paz)", "Cerrar un poema", "Cambiar el tiempo verbal"], answerIndex: 1 },
+  { prompt: "Identifica la metáfora:", options: ["Tus ojos son estrellas", "Tus ojos brillan como estrellas", "Tienes ojos bonitos", "Tus ojos azules"], answerIndex: 0 },
+  { prompt: "¿Por qué importan los símbolos en textos literarios?", options: ["Porque alargan el texto", "Porque añaden emoción y niveles de significado", "Porque quitan rima", "Porque quitan ritmo"], answerIndex: 1 },
+  { prompt: "Un motivo que se repite sirve para…", options: ["Rellenar páginas", "Reforzar el tema central", "Cambiar el género", "Eliminar descripciones"], answerIndex: 1 },
+];
+
+// Botón 4: TEMA 5. TEMAS LITERARIOS EN TEXTOS NARRATIVOS, LÍRICOS Y DRAMÁTICOS.
+const bank4: Question[] = [
+  { prompt: "El 'tema' de un texto es…", options: ["El argumento detallado", "La idea central que recorre la obra", "El nombre del protagonista", "El género literario"], answerIndex: 1 },
+  { prompt: "En un poema, un tema frecuente de la lírica es…", options: ["Instructivos", "Amor y paso del tiempo", "Balance contable", "Contrato de arrendamiento"], answerIndex: 1 },
+  { prompt: "En una obra dramática, un tema puede explorarse mediante…", options: ["Acotaciones exclusivamente", "Diálogos y conflictos de personajes", "Tablas comparativas", "Notas al pie"], answerIndex: 1 },
+  { prompt: "En narrativa, el tema se refuerza con…", options: ["Conflictos, símbolos y motivos", "Solo descripciones", "Salto de página", "Índice"], answerIndex: 0 },
+  { prompt: "¿Qué enuncia mejor un tema?", options: ["'El abuelo se enferma'", "'La fragilidad de la vida'", "'La casa es azul'", "'Se casan al final'"], answerIndex: 1 },
+];
+
+// Botón 5: TEMA 6 Y 7. ELEMENTOS BÁSICOS DE DOCUMENTOS LEGALES Y ADMINISTRATIVOS SENCILLOS.
+const bank5: Question[] = [
+  { prompt: "Un documento administrativo sencillo (oficio/solicitud) debe incluir…", options: ["Metáforas", "Datos del remitente y destinatario, asunto, fecha y firma", "Rimas", "Ilustraciones"], answerIndex: 1 },
+  { prompt: "El tono apropiado en un documento legal/administrativo es…", options: ["Coloquial", "Formal, claro y respetuoso", "Poético", "Sarcasmo"], answerIndex: 1 },
+  { prompt: "¿Qué parte explica el propósito del documento?", options: ["Asunto", "Firma", "Anexo", "Saludo"], answerIndex: 0 },
+  { prompt: "La 'carta poder' es…", options: ["Un poema", "Un documento para autorizar a otra persona a actuar", "Un folleto", "Un instructivo"], answerIndex: 1 },
+  { prompt: "En un formato, los 'anexos' se refieren a…", options: ["Saludos", "Documentos adjuntos que respaldan la solicitud", "Bromas", "Notas de autor"], answerIndex: 1 },
+];
+
+// Botón 6: TEMA 8. ARTÍCULO DE OPINIÓN.
+const bank6: Question[] = [
+  { prompt: "Un artículo de opinión es…", options: ["Un texto expositivo", "Un texto argumentativo con postura del autor", "Un instructivo", "Una reseña técnica"], answerIndex: 1 },
+  { prompt: "La parte donde se presentan las pruebas y razones es…", options: ["Título", "Cuerpo del artículo", "Epígrafe", "Créditos"], answerIndex: 1 },
+  { prompt: "¿Qué conector expresa consecuencia?", options: ["Sin embargo", "Aunque", "Por lo tanto", "Pero"], answerIndex: 2 },
+  { prompt: "Para fortalecer un argumento conviene…", options: ["Evitar datos", "Usar datos verificables y citas de autoridad", "Usar rima", "Cambiar de tema"], answerIndex: 1 },
+  { prompt: "La conclusión de un artículo de opinión debe…", options: ["Abrir nuevos temas sin relación", "Reafirmar la postura y propuestas", "Eliminar la tesis", "Usar versos"], answerIndex: 1 },
+];
+
+// Botón 7: TEMA 9. REGLAS DE SINTAXIS Y MORFOLOGÍA.
+const bank7: Question[] = [
+  { prompt: "La sintaxis estudia…", options: ["El origen de las palabras", "El orden y relación de palabras en la oración", "La ortografía de nombres propios", "El número de sílabas"], answerIndex: 1 },
+  { prompt: "Identifica la oración correcta:", options: ["Libro un lee María", "María lee un libro", "Lee María un libro libro", "María libro un lee"], answerIndex: 1 },
+  { prompt: "La morfología analiza…", options: ["Sólo la rima", "La estructura y formación de las palabras", "La métrica", "Los signos de puntuación"], answerIndex: 1 },
+  { prompt: "La concordancia sujeto–verbo correcta implica…", options: ["Sujeto singular con verbo plural siempre", "Coincidencia en número y persona", "Cambiar tiempos sin razón", "Eliminar el sujeto"], answerIndex: 1 },
+  { prompt: "¿Qué es un prefijo?", options: ["Parte final de la palabra", "Elemento que se antepone a la raíz para modificar significado", "Signo de puntuación", "Tiempo verbal"], answerIndex: 1 },
+];
+
+// Botón 8: TEMA 10. COHESIÓN EN TEXTOS.
+const bank8: Question[] = [
+  { prompt: "La cohesión textual se logra con…", options: ["Párrafos inconexos", "Conectores, referencias (anáforas/catáforas) y elipsis", "Cambios bruscos de tema", "Rimas"], answerIndex: 1 },
+  { prompt: "¿Qué signo introduce una lista o explicación?", options: [";", ",", ":", "."], answerIndex: 2 },
+  { prompt: "Un conector de adición es…", options: ["Además", "Sin embargo", "Por lo tanto", "No obstante"], answerIndex: 0 },
+  { prompt: "La referencia anafórica consiste en…", options: ["Adelantar una idea", "Retomar un elemento ya mencionado (p. ej., 'María… ella…')", "Rimar dos versos", "Eliminar sujetos"], answerIndex: 1 },
+  { prompt: "Para evitar repeticiones se puede usar…", options: ["Sustitución léxica, pronombres y sinónimos", "Repetición constante", "Rima consonante", "Mayúsculas"], answerIndex: 0 },
+];
+
+const sectionBanks
+: Record<SectionKey, Question[]> = {
+  seccion1: bank1,
+  seccion2: bank2,
+  seccion3: bank3,
+  seccion4: bank4,
+  seccion5: bank5,
+  seccion6: bank6,
+  seccion7: bank7,
+  seccion8: bank8,
+};
+
+// —— Resúmenes por sección (lenguaje claro para 14 años) —— //
+const SectionSummaries: Record<SectionKey, { title: string; summary: React.ReactNode }> = {
+  seccion1: {
+    title: "TEMA 1 Y 2. TEXTOS DESCRIPTIVOS, EXPOSITIVOS Y ARGUMENTATIVOS.",
+    summary: (
+      <div className="space-y-4 text-base leading-relaxed">
+        <h3 className="text-xl font-semibold">Propósito del tema</h3>
+        <p>Distinguir ideas principales/ secundarias, diferenciar información sustentada de opinión y dominar estructura y recursos de textos expositivos, argumentativos y descriptivos.</p>
+
+        <h4 className="font-semibold">Ideas principales vs. secundarias</h4>
+        <ul className="list-disc pl-5 space-y-1">
+          <li><strong>Idea principal</strong>: núcleo del párrafo; si se elimina, el texto pierde sentido.</li>
+          <li><strong>Ideas secundarias</strong>: amplían, ejemplifican o explican la idea principal.</li>
+          <li><strong>Cómo identificarlas</strong>: localiza la oración que condensa el mensaje; el resto desarrolla o sustenta.</li>
+        </ul>
+
+        <h4 className="font-semibold">Información sustentada vs. opinión</h4>
+        <ul className="list-disc pl-5 space-y-1">
+          <li><strong>Información sustentada</strong>: hechos verificables, datos, estadísticas, evidencias y fuentes confiables.</li>
+          <li><strong>Opinión</strong>: juicios personales ("creo que…", "opino que…").</li>
+          <li><strong>Distinción práctica</strong>: detecta marcadores de postura y exige pruebas/argumentos que respalden la afirmación.</li>
+        </ul>
+
+        <h4 className="font-semibold">Textos expositivos</h4>
+        <ul className="list-disc pl-5 space-y-1">
+          <li><strong>Propósito</strong>: informar objetivamente.</li>
+          <li><strong>Estructura</strong>: introducción → desarrollo → conclusión.</li>
+          <li><strong>Organización</strong>: clara, ordenada; lenguaje preciso y formal.</li>
+          <li><strong>Recursos</strong>: ejemplos, definiciones, <em>tablas e imágenes</em> para agilizar comprensión.</li>
+          <li><strong>Pertinencia</strong>: evalúa si el recurso aporta claridad o distrae; debe integrarse al contenido.</li>
+        </ul>
+
+        <h4 className="font-semibold">Textos argumentativos</h4>
+        <ul className="list-disc pl-5 space-y-1">
+          <li><strong>Propósito</strong>: persuadir/defender una <em>tesis</em>.</li>
+          <li><strong>Estructura</strong>: introducción (tesis) → cuerpo (argumentos y pruebas) → conclusión.</li>
+          <li><strong>Organización</strong>: argumentos conectados y jerarquizados para convencer.</li>
+        </ul>
+
+        <h4 className="font-semibold">Conectores discursivos</h4>
+        <ul className="list-disc pl-5 space-y-1">
+          <li><strong>Función</strong>: enlazan ideas (causa, consecuencia, adición, contraste) y dan cohesión.</li>
+          <li><strong>Ejemplo integrado</strong>: "La sequía afecta los cultivos; <em>sin embargo</em>, las inundaciones también generan problemas. <em>Además</em>, falta agua para riego. <em>En consecuencia</em>, se pierden cosechas."</li>
+        </ul>
+
+        <h4 className="font-semibold">Redacción de explicaciones (profundización)</h4>
+        <p>Desarrolla cada punto del esquema con definiciones, causas/efectos y descripciones. Ejemplo: "Las sequías reducen el agua de riego; las inundaciones dañan infraestructura y cultivos, generando pérdidas económicas."</p>
+
+        <h4 className="font-semibold">Texto descriptivo</h4>
+        <ul className="list-disc pl-5 space-y-1">
+          <li>Retrata rasgos con lenguaje sensorial y orden lógico (primero/luego/por último).</li>
+        </ul>
+      </div>
+    ),
+  },
+  seccion2: {
+    title: "TEMA 3. ESTRUCTURA DE UNA NARRACIÓN Y UNA OBRA DRAMÁTICA.",
+    summary: (
+      <div className="space-y-4 text-base leading-relaxed">
+        <h4 className="font-semibold">Narración</h4>
+        <ul className="list-disc pl-5 space-y-1">
+          <li>Estructura: <strong>introducción</strong>, <strong>nudo</strong> y <strong>desenlace</strong>.</li>
+          <li>Componentes: narrador (1ª/3ª), personajes, tiempo y espacio.</li>
+          <li>El <strong>conflicto</strong> impulsa la trama; el punto de vista modifica la experiencia del lector.</li>
+          <li><strong>Ejemplo de desarrollo</strong>: "El sol se ponía… el viajero, agotado…" (la voz del narrador describe acciones y ambiente).</li>
+        </ul>
+        <h4 className="font-semibold">Drama</h4>
+        <ul className="list-disc pl-5 space-y-1">
+          <li>Se organiza en <strong>actos</strong> y <strong>escenas</strong>.</li>
+          <li>Avanza mediante <strong>diálogos</strong> y <strong>acciones</strong> en escena.</li>
+          <li><strong>Acotaciones</strong>: instrucciones escénicas (p. ej., <em>(grita con enojo)</em>, <em>(entra llorando)</em>).</li>
+          <li><strong>Monólogos</strong>: muestran pensamientos y emociones internas.</li>
+          <li>Comparativa clave (Narración vs. Drama): la primera describe con voz narrativa; el segundo muestra en escena.</li>
+        </ul>
+        <h4 className="font-semibold">Poesía</h4>
+        <ul className="list-disc pl-5 space-y-1">
+          <li>Análisis de <strong>métrica</strong>, <strong>rima</strong> y <strong>verso libre</strong> para ritmo y significado.</li>
+        </ul>
+      </div>
+    ),
+  },
+  seccion3: {
+    title: "TEMA 4. FUNCIONES ESTÉTICAS Y SIMBÓLICAS.",
+    summary: (
+      <div className="space-y-4 text-base leading-relaxed">
+        <h4 className="font-semibold">¿Para qué sirven?</h4>
+        <ul className="list-disc pl-5 space-y-1">
+          <li><strong>Funciones estéticas</strong>: embellecimiento ("tus ojos son dos luceros"), creación de atmósfera/estilo, y mayor expresividad (hipérboles como "lloraba mares").</li>
+          <li><strong>Funciones simbólicas</strong>: aportan profundidad y varios niveles de significado (paloma = paz/libertad/esperanza); permiten expresar ideas abstractas y emociones.</li>
+        </ul>
+        <h4 className="font-semibold">Según el tipo de texto</h4>
+        <ul className="list-disc pl-5 space-y-1">
+          <li><strong>Lírica</strong>: metáforas y símbolos para sentimientos ("El amor es un campo de batalla").</li>
+          <li><strong>Narrativa</strong>: motivos que se repiten (la lluvia como símbolo de tristeza) para reforzar el tema.</li>
+          <li><strong>Drama</strong>: acotaciones que indican gestos/ambiente y guían la interpretación.</li>
+        </ul>
+        <h4 className="font-semibold">Indicadores de análisis</h4>
+        <ul className="list-disc pl-5 space-y-1">
+          <li>Símbolos y metáforas (rosa = amor; "tus ojos son estrellas").</li>
+          <li>Motivos y temas (repeticiones significativas que orientan la lectura).</li>
+          <li>Papel de las acotaciones para emoción, ambiente y construcción de personajes.</li>
+        </ul>
+      </div>
+    ),
+  },
+  seccion4: {
+    title: "TEMA 5. TEMAS LITERARIOS EN TEXTOS NARRATIVOS, LÍRICOS Y DRAMÁTICOS.",
+    summary: (
+      <div className="space-y-4 text-base leading-relaxed">
+        <p>Estudio del <strong>tema</strong> como idea central (amor, justicia, identidad, miedo, etc.) y cómo se manifiesta por conflictos, símbolos, motivos, tono y voz poética.</p>
+        <h4 className="font-semibold">Adaptación y reinterpretación</h4>
+        <ul className="list-disc pl-5 space-y-1">
+          <li><strong>Adaptación</strong>: traslado del tema a otro medio (cine, pintura, música) conservando su esencia pero ajustándolo al nuevo lenguaje.</li>
+          <li><strong>Reinterpretación</strong>: el nuevo medio modifica el enfoque y expresividad del tema original.</li>
+          <li><strong>Objetivo del análisis</strong>: comparar similitudes/diferencias entre original y adaptación, y cómo cambia el impacto.</li>
+        </ul>
+      </div>
+    ),
+  },
+  seccion5: {
+    title: "TEMA 6 Y 7. ELEMENTOS BÁSICOS DE DOCUMENTOS LEGALES Y ADMINISTRATIVOS SENCILLOS.",
+    summary: (
+      <div className="space-y-4 text-base leading-relaxed">
+        <h4 className="font-semibold">Partes y formato</h4>
+        <ul className="list-disc pl-5 space-y-1">
+          <li>Remitente, destinatario, asunto, fecha, cuerpo, cierre, firma y anexos.</li>
+          <li>Tono <strong>formal</strong>, claro y respetuoso; datos completos y orden.</li>
+        </ul>
+        <h4 className="font-semibold">Ejemplos y conceptos</h4>
+        <ul className="list-disc pl-5 space-y-1">
+          <li><strong>Carta poder</strong>: autoriza a otra persona a actuar en tu nombre.</li>
+          <li><strong>Oficio/solicitud</strong>: comunican o piden algo a una autoridad o institución.</li>
+          <li><strong>Anexos</strong>: documentos que respaldan la solicitud.</li>
+        </ul>
+      </div>
+    ),
+  },
+  seccion6: {
+    title: "TEMA 8. ARTÍCULO DE OPINIÓN",
+    summary: (
+      <div className="space-y-4 text-base leading-relaxed">
+        <h4 className="font-semibold">Estructura y rasgos</h4>
+        <ul className="list-disc pl-5 space-y-1">
+          <li>Título; introducción (plantea tema y postura); <strong>cuerpo</strong> con argumentos basados en datos/citas; <strong>conclusión</strong> que reafirma postura y propone.</li>
+          <li>Uso de conectores (consecuencia, contraste, adición) y registro formal.</li>
+          <li>Evitar falacias y generalizaciones; apoyar con evidencia verificable.</li>
+        </ul>
+      </div>
+    ),
+  },
+  seccion7: {
+    title: "TEMA 9. REGLAS DE SINTAXIS Y MORFOLOGÍA.",
+    summary: (
+      <div className="space-y-4 text-base leading-relaxed">
+        <ul className="list-disc pl-5 space-y-1">
+          <li><strong>Sintaxis</strong>: orden y relación de palabras; funciones (sujeto, predicado, complementos).</li>
+          <li><strong>Morfología</strong>: estructura de palabras (raíz, prefijos, sufijos) y procesos de formación.</li>
+          <li><strong>Concordancia</strong>: coincidencia número/persona entre sujeto y verbo.</li>
+          <li><strong>Prefijo</strong>: elemento que se antepone a la raíz para modificar significado.</li>
+        </ul>
+      </div>
+    ),
+  },
+  seccion8: {
+    title: "TEMA 10. COHESIÓN EN TEXTOS",
+    summary: (
+      <div className="space-y-4 text-base leading-relaxed">
+        <h4 className="font-semibold">Mecanismos de cohesión</h4>
+        <ul className="list-disc pl-5 space-y-1">
+          <li><strong>Conectores</strong>: adición (además), contraste (sin embargo), causa (porque), consecuencia (por lo tanto), orden (primero/luego), ejemplificación (por ejemplo).</li>
+          <li><strong>Referencias</strong>: anáfora (retoma elemento previo), catáfora (anticipa), elipsis (omisión recuperable), sustitución léxica y sinonimia.</li>
+          <li><strong>Puntuación</strong>: dos puntos para introducir listas/explicaciones; punto y coma para separar ideas relacionadas; comas (enumerativas/explicativas) para claridad.</li>
+        </ul>
+      </div>
+    ),
+  },
+};
+
+// —— Componente de Quiz reutilizable —— //
+function Quiz({ bank, numQuestions, title, onBack }: { bank: Question[]; numQuestions: number; title: string; onBack: () => void }) {
+  const [seed, setSeed] = useState(0); // para regenerar versión
+  const questions = useMemo(() => {
+    const picked = shuffleArray(bank).slice(0, numQuestions).map((q) => {
+      const shuffled = shuffleArray(q.options);
+      const correctText = q.options[q.answerIndex];
+      const newAnswerIndex = shuffled.findIndex((o) => o === correctText);
+      return { ...q, options: shuffled, answerIndex: newAnswerIndex };
+    });
+    return picked;
+  }, [bank, numQuestions, seed]);
+
+  const [answers, setAnswers] = useState<(number | null)[]>(Array(questions.length).fill(null));
+  const [submitted, setSubmitted] = useState(false);
+
+  const score = useMemo(() => {
+    if (!submitted) return 0;
+    return questions.reduce((acc, q, i) => {
+      const chosen = answers[i];
+      return acc + (chosen === q.answerIndex ? 1 : 0);
+    }, 0);
+  }, [submitted, answers, questions]);
+
+  function handleSelect(qi: number, oi: number) {
+    if (submitted) return;
+    const copy = [...answers];
+    copy[qi] = oi;
+    setAnswers(copy);
+  }
+
+  function handleSubmit() {
+    setSubmitted(true);
+  }
+
+  function regenerate() {
+    setSeed((s) => s + 1);
+    setAnswers(Array(numQuestions).fill(null));
+    setSubmitted(false);
+  }
+
+  return (
+    <div className="max-w-3xl mx-auto p-4">
+      <div className="mb-4 flex items-center justify-between">
+        <h2 className="text-2xl font-semibold">{title}</h2>
+        <button onClick={onBack} className="px-3 py-1.5 rounded-xl bg-gray-100 hover:bg-gray-200 transition">← Regresar</button>
+      </div>
+
+      <div className="space-y-6">
+        {questions.map((q, qi) => (
+          <div key={qi} className="rounded-2xl p-4 shadow border">
+            <div className="font-medium mb-3">{qi + 1}. {q.prompt}</div>
+            <div className="grid gap-2">
+              {q.options.map((opt, oi) => (
+                <label key={oi} className={`flex items-center gap-2 rounded-xl border p-2 cursor-pointer ${answers[qi] === oi ? "bg-blue-50 border-blue-300" : "hover:bg-gray-50"}`}>
+                  <input
+                    type="radio"
+                    className="accent-black"
+                    checked={answers[qi] === oi}
+                    onChange={() => handleSelect(qi, oi)}
+                  />
+                  <span>{opt}</span>
+                </label>
+              ))}
+            </div>
+            {submitted && (
+              <div className="mt-3 text-sm">
+                {(() => {
+                  const chosen = answers[qi];
+                  const correctText = q.options[q.answerIndex];
+                  const ok = chosen === q.answerIndex;
+                  return (
+                    <div>
+                      {ok ? (
+                        <div className="text-green-700">✔ Correcto</div>
+                      ) : (
+                        <div className="text-red-700">✘ Incorrecto. Respuesta correcta: <strong>{correctText}</strong>{q.explanation ? ` — ${q.explanation}` : ""}</div>
+                      )}
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+
+      <div className="mt-6 flex items-center gap-3">
+        {!submitted ? (
+          <button onClick={handleSubmit} className="px-4 py-2 rounded-2xl bg-black text-white shadow hover:opacity-90">Enviar respuestas</button>
+        ) : (
+          <>
+            <div className="text-lg">Puntaje: <strong>{score}/{questions.length}</strong></div>
+            <button onClick={regenerate} className="px-4 py-2 rounded-2xl bg-gray-900 text-white shadow hover:opacity-90">Intentar otra versión</button>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// —— Páginas de Sección (resumen + botón al quiz de 5 preguntas) —— //
+function SectionPage({ sectionKey, onBack, onStartQuiz }: { sectionKey: SectionKey; onBack: () => void; onStartQuiz: () => void }) {
+  const { title, summary } = SectionSummaries[sectionKey];
+  return (
+    <div className="max-w-3xl mx-auto p-4">
+      <div className="mb-4 flex items-center justify-between">
+        <h2 className="text-2xl font-semibold">{title}</h2>
+        <button onClick={onBack} className="px-3 py-1.5 rounded-xl bg-gray-100 hover:bg-gray-200 transition">← Regresar</button>
+      </div>
+
+      <div className="prose max-w-none mb-8">
+        {summary}
+      </div>
+
+      <div className="mt-8 border-t pt-6">
+        <button onClick={onStartQuiz} className="px-4 py-2 rounded-2xl bg-black text-white shadow hover:opacity-90">
+          Hacer quiz de esta sección (5 preguntas)
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// —— Página principal —— //
+export default function App() {
+  const [page, setPage] = useState<Page>({ type: "home" });
+  const [activeSection, setActiveSection] = useState<SectionKey | null>(null);
+
+  const goHome = () => setPage({ type: "home" });
+
+  // Render condicional segun página
+  if (page.type === "section" && activeSection) {
+    const bank = sectionBanks[activeSection];
+    const title = `Quiz – ${SectionSummaries[activeSection].title}`;
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-white to-gray-50">
+        <SectionPage
+          sectionKey={activeSection}
+          onBack={goHome}
+          onStartQuiz={() => setPage({ type: "section" })}
+        />
+        {/* Si el usuario presiona el botón, mostramos el quiz inmediatamente debajo */}
+        <div className="pb-16">
+          <Quiz bank={bank} numQuestions={5} title={title} onBack={goHome} />
+        </div>
+      </div>
+    );
+  }
+
+  if (page.type === "generalQuiz") {
+    // Banco general: todas las preguntas
+    const fullBank = [
+      ...bank1,
+      ...bank2,
+      ...bank3,
+      ...bank4,
+      ...bank5,
+      ...bank6,
+      ...bank7,
+      ...bank8,
+    ];
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-white to-gray-50">
+        <Quiz bank={fullBank} numQuestions={20} title="Quiz General (20 preguntas)" onBack={goHome} />
+      </div>
+    );
+  }
+
+  // Página de inicio
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-white to-gray-50">
+      <header className="px-6 pt-10 pb-6 text-center">
+        <h1 className="text-4xl font-bold tracking-tight">Guía de Estudio Español</h1>
+        <p className="mt-2 text-gray-600">Resumen general, secciones con apuntes claros y quizzes auto-generados.</p>
+      </header>
+
+      <main className="max-w-4xl mx-auto p-4">
+        {/* Ventana de video */}
+        <div className="rounded-2xl overflow-hidden shadow border bg-black aspect-video mb-8">
+          <video controls src={VIDEO_URL} className="w-full h-full" />
+        </div>
+
+        {/* Botones de secciones */}
+        <div className="grid sm:grid-cols-2 gap-4 mb-8">
+          {(() => {
+            const menu: { key: SectionKey; label: string }[] = [
+              { key: "seccion1", label: "TEMA 1 Y 2. TEXTOS DESCRIPTIVOS, EXPOSITIVOS Y ARGUMENTATIVOS." },
+              { key: "seccion2", label: "TEMA 3. ESTRUCTURA DE UNA NARRACIÓN Y UNA OBRA DRAMÁTICA." },
+              { key: "seccion3", label: "TEMA 4. FUNCIONES ESTÉTICAS Y SIMBÓLICAS." },
+              { key: "seccion4", label: "TEMA 5. TEMAS LITERARIOS EN TEXTOS NARRATIVOS, LÍRICOS Y DRAMÁTICOS." },
+              { key: "seccion5", label: "TEMA 6 Y 7. ELEMENTOS BÁSICOS DE DOCUMENTOS LEGALES Y ADMINISTRATIVOS SENCILLOS." },
+              { key: "seccion6", label: "TEMA 8. ARTÍCULO DE OPINIÓN" },
+              { key: "seccion7", label: "TEMA 9. REGLAS DE SINTAXIS Y MORFOLOGÍA." },
+              { key: "seccion8", label: "TEMA 10. COHESIÓN EN TEXTOS" },
+            ];
+            return menu.map(({ key, label }, idx) => (
+              <button
+                key={key}
+                onClick={() => { setActiveSection(key); setPage({ type: "section", key }); }}
+                className="text-left p-4 rounded-2xl border shadow hover:shadow-md hover:-translate-y-0.5 transition"
+              >
+                <div className="text-sm text-gray-500">Sección {idx + 1}</div>
+                <div className="text-lg font-semibold">{label}</div>
+                <div className="mt-1 text-gray-600 line-clamp-2">Accede al resumen y practica con un quiz de 5 preguntas.</div>
+              </button>
+            ));
+          })()}
+        </div>
+
+        {/* Link al Quiz General */}
+        <div className="text-center mb-16">
+          <button
+            onClick={() => setPage({ type: "generalQuiz" })}
+            className="px-6 py-3 rounded-2xl bg-black text-white font-medium shadow hover:opacity-90"
+          >
+            Hacer Quiz General (20 preguntas)
+          </button>
+          <p className="text-sm text-gray-600 mt-2">Cada intento genera una versión diferente.</p>
+        </div>
+      </main>
+
+      <footer className="text-center text-xs text-gray-500 pb-8">
+        "Pluto el que lo lea"
+      </footer>
+    </div>
+  );
+}
