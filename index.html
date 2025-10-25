@@ -1,544 +1,1830 @@
-import React, { useMemo, useState } from "react";
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guía de Estudio Español</title>
+    
+    <!-- 
+      CSS (Estilos)
+      Todo el contenido de 'style.css' está ahora aquí adentro.
+    -->
+    <style>
+        /* Estilos Generales */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            background-color: #f4f7f6;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
 
-/**
- * Guía de Estudio Español (SPA en React)
- * - Página principal con video de resumen (enlazado a GitHub RAW o similar)
- * - 8 secciones con resúmenes claros para un(a) estudiante de 14 años
- * - Quiz por sección (5 preguntas, aleatorio cada vez)
- * - Quiz General (20 preguntas de todo el material, aleatorio cada vez)
- *
- * 👉 Instrucciones rápidas
- * 1) Cambia VIDEO_URL por el enlace RAW del video en tu GitHub.
- * 2) Si lo deseas, agrega más preguntas a cada banco (respetando el formato).
- * 3) Exporta este archivo como un único componente y prévisualo.
- */
+        header {
+            background-color: #005a9c; /* Azul académico */
+            color: #ffffff;
+            padding: 20px 40px;
+            text-align: center;
+            border-bottom: 4px solid #fdb813; /* Detalle en dorado */
+        }
 
-// ←— Cambia este enlace por el RAW del video de tu repo GitHub
-const VIDEO_URL = "https://raw.githubusercontent.com/tu-usuario/tu-repo/main/video_resumen.mp4";
+        header h1 {
+            margin: 0;
+            font-size: 2.2em; /* Ajustado para móviles */
+        }
 
-// Utilidad: barajar array (Fisher–Yates)
-function shuffleArray<T>(arr: T[]): T[] {
-  const a = [...arr];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-}
+        main {
+            max-width: 900px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            /* Importante: overflow: hidden para que los márgenes de los hijos no colapsen */
+            overflow: hidden; 
+        }
 
-// Tipos
-type Question = {
-  prompt: string;
-  options: string[];
-  answerIndex: number;
-  explanation?: string;
-};
+        footer {
+            text-align: center;
+            margin-top: 20px;
+            padding: 0 20px 20px;
+            font-size: 0.9em;
+            color: #777;
+        }
 
-type SectionKey =
-  | "seccion1"
-  | "seccion2"
-  | "seccion3"
-  | "seccion4"
-  | "seccion5"
-  | "seccion6"
-  | "seccion7"
-  | "seccion8";
+        h1, h2, h3 {
+            color: #003b6f; /* Azul más oscuro */
+            margin-bottom: 0.5em;
+        }
 
+        h2 { border-bottom: 2px solid #eee; padding-bottom: 5px; }
+        h3 { color: #005a9c; }
 
-type Page = { type: "home" } | { type: "section"; key: SectionKey } | { type: "generalQuiz" };
+        p { margin-bottom: 1em; }
+        ul, ol { margin-bottom: 1em; padding-left: 20px; }
+        li { margin-bottom: 0.5em; }
 
-// —— Banco de preguntas por sección —— //
-// Botón 1: TEMA 1 Y 2. TEXTOS DESCRIPTIVOS, EXPOSITIVOS Y ARGUMENTATIVOS.
-const bank1: Question[] = [
-  { prompt: "¿Cuál es el propósito principal de un texto expositivo?", options: ["Persuadir al lector", "Informar de forma objetiva", "Provocar emociones", "Narrar en primera persona"], answerIndex: 1, explanation: "El texto expositivo busca informar de forma objetiva y clara." },
-  { prompt: "En un texto argumentativo, la tesis es…", options: ["Un dato verificado", "La opinión que se defiende", "Una anécdota", "El título del texto"], answerIndex: 1, explanation: "La tesis es la postura u opinión central que el autor intenta sostener." },
-  { prompt: "¿Qué diferencia a la idea principal de una idea secundaria?", options: ["La principal adorna; la secundaria da sentido", "La principal es el núcleo; la secundaria amplía o explica", "La secundaria es más importante", "No hay diferencia"], answerIndex: 1 },
-  { prompt: "Un ejemplo de conector de contraste es…", options: ["Además", "Por lo tanto", "Sin embargo", "Luego"], answerIndex: 2 },
-  { prompt: "Identifica la opción que muestra información sustentada:", options: ["Creo que los videojuegos son malos", "Un estudio reportó que el 60% juega a diario", "En mi opinión, estudiar es aburrido", "A mí me parece que leer cansa"], answerIndex: 1 },
-  { prompt: "¿Cuál de estos recursos ayuda a organizar y clarificar información?", options: ["Metáforas complejas", "Tablas e imágenes pertinentes", "Rimas y versos", "Onomatopeyas"], answerIndex: 1 },
-  { prompt: "Un texto argumentativo típico se organiza en…", options: ["Planteamiento, nudo y desenlace", "Introducción (tesis), cuerpo (argumentos) y conclusión", "Inicio, desarrollo libre", "Solo citas de autoridad"], answerIndex: 1 },
-  { prompt: "¿Qué función cumplen los ejemplos en un texto expositivo?", options: ["Emocionar", "Embellecer", "Aclarar conceptos y hacerlos comprensibles", "Crear rima"], answerIndex: 2 },
-];
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5em 0;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
 
-// Botón 2: TEMA 3. ESTRUCTURA DE UNA NARRACIÓN Y UNA OBRA DRAMÁTICA.
-const bank2: Question[] = [
-  { prompt: "La estructura clásica de la narración es…", options: ["Exposición, refutación, conclusión", "Introducción, nudo y desenlace", "Actos y escenas", "Planteamiento único"], answerIndex: 1 },
-  { prompt: "¿Cuál de las siguientes NO es una función del narrador?", options: ["Contar hechos", "Describir escenarios", "Actuar como personaje en escena con acotaciones", "Presentar la perspectiva de la historia"], answerIndex: 2 },
-  { prompt: "En una obra dramática, las acotaciones sirven para…", options: ["Introducir rimas", "Indicar acciones, gestos y ambiente escénico", "Explicar la voz del narrador", "Dar bibliografía"], answerIndex: 1 },
-  { prompt: "El conflicto en una narración…", options: ["No importa", "Es el choque de fuerzas que impulsa la trama", "Solo existe en la poesía", "Es un recurso de puntuación"], answerIndex: 1 },
-  { prompt: "Una obra dramática se organiza en…", options: ["Capítulos", "Actos y escenas", "Versos", "Partes libres"], answerIndex: 1 },
-  { prompt: "El monólogo en el drama se usa para…", options: ["Describir paisajes", "Mostrar pensamientos internos de un personaje", "Anunciar el título", "Cambiar el narrador"], answerIndex: 1 },
-];
+        table th, table td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
 
-// Botón 3: TEMA 4. FUNCIONES ESTÉTICAS Y SIMBÓLICAS.
-const bank3: Question[] = [
-  { prompt: "Una función estética de los recursos literarios es…", options: ["Probar científicamente", "Embellecer el texto y crear atmósfera", "Traducir datos", "Definir leyes"], answerIndex: 1 },
-  { prompt: "Una función simbólica consiste en…", options: ["Hacer reír", "Dar significados más profundos (paloma = paz)", "Cerrar un poema", "Cambiar el tiempo verbal"], answerIndex: 1 },
-  { prompt: "Identifica la metáfora:", options: ["Tus ojos son estrellas", "Tus ojos brillan como estrellas", "Tienes ojos bonitos", "Tus ojos azules"], answerIndex: 0 },
-  { prompt: "¿Por qué importan los símbolos en textos literarios?", options: ["Porque alargan el texto", "Porque añaden emoción y niveles de significado", "Porque quitan rima", "Porque quitan ritmo"], answerIndex: 1 },
-  { prompt: "Un motivo que se repite sirve para…", options: ["Rellenar páginas", "Reforzar el tema central", "Cambiar el género", "Eliminar descripciones"], answerIndex: 1 },
-];
+        table th {
+            background-color: #e9f1f7;
+            color: #003b6f;
+            font-weight: bold;
+        }
 
-// Botón 4: TEMA 5. TEMAS LITERARIOS EN TEXTOS NARRATIVOS, LÍRICOS Y DRAMÁTICOS.
-const bank4: Question[] = [
-  { prompt: "El 'tema' de un texto es…", options: ["El argumento detallado", "La idea central que recorre la obra", "El nombre del protagonista", "El género literario"], answerIndex: 1 },
-  { prompt: "En un poema, un tema frecuente de la lírica es…", options: ["Instructivos", "Amor y paso del tiempo", "Balance contable", "Contrato de arrendamiento"], answerIndex: 1 },
-  { prompt: "En una obra dramática, un tema puede explorarse mediante…", options: ["Acotaciones exclusivamente", "Diálogos y conflictos de personajes", "Tablas comparativas", "Notas al pie"], answerIndex: 1 },
-  { prompt: "En narrativa, el tema se refuerza con…", options: ["Conflictos, símbolos y motivos", "Solo descripciones", "Salto de página", "Índice"], answerIndex: 0 },
-  { prompt: "¿Qué enuncia mejor un tema?", options: ["'El abuelo se enferma'", "'La fragilidad de la vida'", "'La casa es azul'", "'Se casan al final'"], answerIndex: 1 },
-];
+        table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
 
-// Botón 5: TEMA 6 Y 7. ELEMENTOS BÁSICOS DE DOCUMENTOS LEGALES Y ADMINISTRATIVOS SENCILLOS.
-const bank5: Question[] = [
-  { prompt: "Un documento administrativo sencillo (oficio/solicitud) debe incluir…", options: ["Metáforas", "Datos del remitente y destinatario, asunto, fecha y firma", "Rimas", "Ilustraciones"], answerIndex: 1 },
-  { prompt: "El tono apropiado en un documento legal/administrativo es…", options: ["Coloquial", "Formal, claro y respetuoso", "Poético", "Sarcasmo"], answerIndex: 1 },
-  { prompt: "¿Qué parte explica el propósito del documento?", options: ["Asunto", "Firma", "Anexo", "Saludo"], answerIndex: 0 },
-  { prompt: "La 'carta poder' es…", options: ["Un poema", "Un documento para autorizar a otra persona a actuar", "Un folleto", "Un instructivo"], answerIndex: 1 },
-  { prompt: "En un formato, los 'anexos' se refieren a…", options: ["Saludos", "Documentos adjuntos que respaldan la solicitud", "Bromas", "Notas de autor"], answerIndex: 1 },
-];
+        .content-section {
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .content-section:last-of-type {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
 
-// Botón 6: TEMA 8. ARTÍCULO DE OPINIÓN.
-const bank6: Question[] = [
-  { prompt: "Un artículo de opinión es…", options: ["Un texto expositivo", "Un texto argumentativo con postura del autor", "Un instructivo", "Una reseña técnica"], answerIndex: 1 },
-  { prompt: "La parte donde se presentan las pruebas y razones es…", options: ["Título", "Cuerpo del artículo", "Epígrafe", "Créditos"], answerIndex: 1 },
-  { prompt: "¿Qué conector expresa consecuencia?", options: ["Sin embargo", "Aunque", "Por lo tanto", "Pero"], answerIndex: 2 },
-  { prompt: "Para fortalecer un argumento conviene…", options: ["Evitar datos", "Usar datos verificables y citas de autoridad", "Usar rima", "Cambiar de tema"], answerIndex: 1 },
-  { prompt: "La conclusión de un artículo de opinión debe…", options: ["Abrir nuevos temas sin relación", "Reafirmar la postura y propuestas", "Eliminar la tesis", "Usar versos"], answerIndex: 1 },
-];
+        /* Página Principal (index.html) */
+        .video-container {
+            text-align: center;
+            margin-bottom: 30px;
+        }
 
-// Botón 7: TEMA 9. REGLAS DE SINTAXIS Y MORFOLOGÍA.
-const bank7: Question[] = [
-  { prompt: "La sintaxis estudia…", options: ["El origen de las palabras", "El orden y relación de palabras en la oración", "La ortografía de nombres propios", "El número de sílabas"], answerIndex: 1 },
-  { prompt: "Identifica la oración correcta:", options: ["Libro un lee María", "María lee un libro", "Lee María un libro libro", "María libro un lee"], answerIndex: 1 },
-  { prompt: "La morfología analiza…", options: ["Sólo la rima", "La estructura y formación de las palabras", "La métrica", "Los signos de puntuación"], answerIndex: 1 },
-  { prompt: "La concordancia sujeto–verbo correcta implica…", options: ["Sujeto singular con verbo plural siempre", "Coincidencia en número y persona", "Cambiar tiempos sin razón", "Eliminar el sujeto"], answerIndex: 1 },
-  { prompt: "¿Qué es un prefijo?", options: ["Parte final de la palabra", "Elemento que se antepone a la raíz para modificar significado", "Signo de puntuación", "Tiempo verbal"], answerIndex: 1 },
-];
+        .video-container video {
+            width: 100%;
+            max-width: 700px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            background-color: #000; /* Fondo negro para el video */
+        }
 
-// Botón 8: TEMA 10. COHESIÓN EN TEXTOS.
-const bank8: Question[] = [
-  { prompt: "La cohesión textual se logra con…", options: ["Párrafos inconexos", "Conectores, referencias (anáforas/catáforas) y elipsis", "Cambios bruscos de tema", "Rimas"], answerIndex: 1 },
-  { prompt: "¿Qué signo introduce una lista o explicación?", options: [";", ",", ":", "."], answerIndex: 2 },
-  { prompt: "Un conector de adición es…", options: ["Además", "Sin embargo", "Por lo tanto", "No obstante"], answerIndex: 0 },
-  { prompt: "La referencia anafórica consiste en…", options: ["Adelantar una idea", "Retomar un elemento ya mencionado (p. ej., 'María… ella…')", "Rimar dos versos", "Eliminar sujetos"], answerIndex: 1 },
-  { prompt: "Para evitar repeticiones se puede usar…", options: ["Sustitución léxica, pronombres y sinónimos", "Repetición constante", "Rima consonante", "Mayúsculas"], answerIndex: 0 },
-];
+        .main-nav {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
 
-const sectionBanks
-: Record<SectionKey, Question[]> = {
-  seccion1: bank1,
-  seccion2: bank2,
-  seccion3: bank3,
-  seccion4: bank4,
-  seccion5: bank5,
-  seccion6: bank6,
-  seccion7: bank7,
-  seccion8: bank8,
-};
+        .nav-button {
+            display: block;
+            background-color: #005a9c;
+            color: #ffffff;
+            text-decoration: none;
+            padding: 15px 20px;
+            border-radius: 5px;
+            text-align: center;
+            font-size: 1.1em;
+            font-weight: 500;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            cursor: pointer; /* Para que parezca clickeable */
+        }
 
-// —— Resúmenes por sección (lenguaje claro para 14 años) —— //
-const SectionSummaries: Record<SectionKey, { title: string; summary: React.ReactNode }> = {
-  seccion1: {
-    title: "TEMA 1 Y 2. TEXTOS DESCRIPTIVOS, EXPOSITIVOS Y ARGUMENTATIVOS.",
-    summary: (
-      <div className="space-y-4 text-base leading-relaxed">
-        <h3 className="text-xl font-semibold">Propósito del tema</h3>
-        <p>Distinguir ideas principales/ secundarias, diferenciar información sustentada de opinión y dominar estructura y recursos de textos expositivos, argumentativos y descriptivos.</p>
+        .nav-button:hover {
+            background-color: #003b6f;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
 
-        <h4 className="font-semibold">Ideas principales vs. secundarias</h4>
-        <ul className="list-disc pl-5 space-y-1">
-          <li><strong>Idea principal</strong>: núcleo del párrafo; si se elimina, el texto pierde sentido.</li>
-          <li><strong>Ideas secundarias</strong>: amplían, ejemplifican o explican la idea principal.</li>
-          <li><strong>Cómo identificarlas</strong>: localiza la oración que condensa el mensaje; el resto desarrolla o sustenta.</li>
-        </ul>
+        .general-quiz {
+            background-color: #e9f1f7;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
 
-        <h4 className="font-semibold">Información sustentada vs. opinión</h4>
-        <ul className="list-disc pl-5 space-y-1">
-          <li><strong>Información sustentada</strong>: hechos verificables, datos, estadísticas, evidencias y fuentes confiables.</li>
-          <li><strong>Opinión</strong>: juicios personales ("creo que…", "opino que…").</li>
-          <li><strong>Distinción práctica</strong>: detecta marcadores de postura y exige pruebas/argumentos que respalden la afirmación.</li>
-        </ul>
+        .quiz-button {
+            display: inline-block;
+            background-color: #28a745; /* Verde */
+            color: #ffffff;
+            text-decoration: none;
+            padding: 12px 25px;
+            border-radius: 5px;
+            font-size: 1.2em;
+            font-weight: bold;
+            transition: background-color 0.3s ease;
+            cursor: pointer; /* Para que parezca clickeable */
+        }
 
-        <h4 className="font-semibold">Textos expositivos</h4>
-        <ul className="list-disc pl-5 space-y-1">
-          <li><strong>Propósito</strong>: informar objetivamente.</li>
-          <li><strong>Estructura</strong>: introducción → desarrollo → conclusión.</li>
-          <li><strong>Organización</strong>: clara, ordenada; lenguaje preciso y formal.</li>
-          <li><strong>Recursos</strong>: ejemplos, definiciones, <em>tablas e imágenes</em> para agilizar comprensión.</li>
-          <li><strong>Pertinencia</strong>: evalúa si el recurso aporta claridad o distrae; debe integrarse al contenido.</li>
-        </ul>
+        .quiz-button.general {
+            background-color: #d9534f; /* Rojo */
+        }
 
-        <h4 className="font-semibold">Textos argumentativos</h4>
-        <ul className="list-disc pl-5 space-y-1">
-          <li><strong>Propósito</strong>: persuadir/defender una <em>tesis</em>.</li>
-          <li><strong>Estructura</strong>: introducción (tesis) → cuerpo (argumentos y pruebas) → conclusión.</li>
-          <li><strong>Organización</strong>: argumentos conectados y jerarquizados para convencer.</li>
-        </ul>
+        .quiz-button:hover {
+            opacity: 0.9;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
 
-        <h4 className="font-semibold">Conectores discursivos</h4>
-        <ul className="list-disc pl-5 space-y-1">
-          <li><strong>Función</strong>: enlazan ideas (causa, consecuencia, adición, contraste) y dan cohesión.</li>
-          <li><strong>Ejemplo integrado</strong>: "La sequía afecta los cultivos; <em>sin embargo</em>, las inundaciones también generan problemas. <em>Además</em>, falta agua para riego. <em>En consecuencia</em>, se pierden cosechas."</li>
-        </ul>
+        .back-button {
+            display: inline-block;
+            margin-top: 20px;
+            font-size: 1em;
+            background-color: #6c757d; /* Gris */
+        }
 
-        <h4 className="font-semibold">Redacción de explicaciones (profundización)</h4>
-        <p>Desarrolla cada punto del esquema con definiciones, causas/efectos y descripciones. Ejemplo: "Las sequías reducen el agua de riego; las inundaciones dañan infraestructura y cultivos, generando pérdidas económicas."</p>
+        .back-button:hover {
+            background-color: #5a6268;
+        }
 
-        <h4 className="font-semibold">Texto descriptivo</h4>
-        <ul className="list-disc pl-5 space-y-1">
-          <li>Retrata rasgos con lenguaje sensorial y orden lógico (primero/luego/por último).</li>
-        </ul>
-      </div>
-    ),
-  },
-  seccion2: {
-    title: "TEMA 3. ESTRUCTURA DE UNA NARRACIÓN Y UNA OBRA DRAMÁTICA.",
-    summary: (
-      <div className="space-y-4 text-base leading-relaxed">
-        <h4 className="font-semibold">Narración</h4>
-        <ul className="list-disc pl-5 space-y-1">
-          <li>Estructura: <strong>introducción</strong>, <strong>nudo</strong> y <strong>desenlace</strong>.</li>
-          <li>Componentes: narrador (1ª/3ª), personajes, tiempo y espacio.</li>
-          <li>El <strong>conflicto</strong> impulsa la trama; el punto de vista modifica la experiencia del lector.</li>
-          <li><strong>Ejemplo de desarrollo</strong>: "El sol se ponía… el viajero, agotado…" (la voz del narrador describe acciones y ambiente).</li>
-        </ul>
-        <h4 className="font-semibold">Drama</h4>
-        <ul className="list-disc pl-5 space-y-1">
-          <li>Se organiza en <strong>actos</strong> y <strong>escenas</strong>.</li>
-          <li>Avanza mediante <strong>diálogos</strong> y <strong>acciones</strong> en escena.</li>
-          <li><strong>Acotaciones</strong>: instrucciones escénicas (p. ej., <em>(grita con enojo)</em>, <em>(entra llorando)</em>).</li>
-          <li><strong>Monólogos</strong>: muestran pensamientos y emociones internas.</li>
-          <li>Comparativa clave (Narración vs. Drama): la primera describe con voz narrativa; el segundo muestra en escena.</li>
-        </ul>
-        <h4 className="font-semibold">Poesía</h4>
-        <ul className="list-disc pl-5 space-y-1">
-          <li>Análisis de <strong>métrica</strong>, <strong>rima</strong> y <strong>verso libre</strong> para ritmo y significado.</li>
-        </ul>
-      </div>
-    ),
-  },
-  seccion3: {
-    title: "TEMA 4. FUNCIONES ESTÉTICAS Y SIMBÓLICAS.",
-    summary: (
-      <div className="space-y-4 text-base leading-relaxed">
-        <h4 className="font-semibold">¿Para qué sirven?</h4>
-        <ul className="list-disc pl-5 space-y-1">
-          <li><strong>Funciones estéticas</strong>: embellecimiento ("tus ojos son dos luceros"), creación de atmósfera/estilo, y mayor expresividad (hipérboles como "lloraba mares").</li>
-          <li><strong>Funciones simbólicas</strong>: aportan profundidad y varios niveles de significado (paloma = paz/libertad/esperanza); permiten expresar ideas abstractas y emociones.</li>
-        </ul>
-        <h4 className="font-semibold">Según el tipo de texto</h4>
-        <ul className="list-disc pl-5 space-y-1">
-          <li><strong>Lírica</strong>: metáforas y símbolos para sentimientos ("El amor es un campo de batalla").</li>
-          <li><strong>Narrativa</strong>: motivos que se repiten (la lluvia como símbolo de tristeza) para reforzar el tema.</li>
-          <li><strong>Drama</strong>: acotaciones que indican gestos/ambiente y guían la interpretación.</li>
-        </ul>
-        <h4 className="font-semibold">Indicadores de análisis</h4>
-        <ul className="list-disc pl-5 space-y-1">
-          <li>Símbolos y metáforas (rosa = amor; "tus ojos son estrellas").</li>
-          <li>Motivos y temas (repeticiones significativas que orientan la lectura).</li>
-          <li>Papel de las acotaciones para emoción, ambiente y construcción de personajes.</li>
-        </ul>
-      </div>
-    ),
-  },
-  seccion4: {
-    title: "TEMA 5. TEMAS LITERARIOS EN TEXTOS NARRATIVOS, LÍRICOS Y DRAMÁTICOS.",
-    summary: (
-      <div className="space-y-4 text-base leading-relaxed">
-        <p>Estudio del <strong>tema</strong> como idea central (amor, justicia, identidad, miedo, etc.) y cómo se manifiesta por conflictos, símbolos, motivos, tono y voz poética.</p>
-        <h4 className="font-semibold">Adaptación y reinterpretación</h4>
-        <ul className="list-disc pl-5 space-y-1">
-          <li><strong>Adaptación</strong>: traslado del tema a otro medio (cine, pintura, música) conservando su esencia pero ajustándolo al nuevo lenguaje.</li>
-          <li><strong>Reinterpretación</strong>: el nuevo medio modifica el enfoque y expresividad del tema original.</li>
-          <li><strong>Objetivo del análisis</strong>: comparar similitudes/diferencias entre original y adaptación, y cómo cambia el impacto.</li>
-        </ul>
-      </div>
-    ),
-  },
-  seccion5: {
-    title: "TEMA 6 Y 7. ELEMENTOS BÁSICOS DE DOCUMENTOS LEGALES Y ADMINISTRATIVOS SENCILLOS.",
-    summary: (
-      <div className="space-y-4 text-base leading-relaxed">
-        <h4 className="font-semibold">Partes y formato</h4>
-        <ul className="list-disc pl-5 space-y-1">
-          <li>Remitente, destinatario, asunto, fecha, cuerpo, cierre, firma y anexos.</li>
-          <li>Tono <strong>formal</strong>, claro y respetuoso; datos completos y orden.</li>
-        </ul>
-        <h4 className="font-semibold">Ejemplos y conceptos</h4>
-        <ul className="list-disc pl-5 space-y-1">
-          <li><strong>Carta poder</strong>: autoriza a otra persona a actuar en tu nombre.</li>
-          <li><strong>Oficio/solicitud</strong>: comunican o piden algo a una autoridad o institución.</li>
-          <li><strong>Anexos</strong>: documentos que respaldan la solicitud.</li>
-        </ul>
-      </div>
-    ),
-  },
-  seccion6: {
-    title: "TEMA 8. ARTÍCULO DE OPINIÓN",
-    summary: (
-      <div className="space-y-4 text-base leading-relaxed">
-        <h4 className="font-semibold">Estructura y rasgos</h4>
-        <ul className="list-disc pl-5 space-y-1">
-          <li>Título; introducción (plantea tema y postura); <strong>cuerpo</strong> con argumentos basados en datos/citas; <strong>conclusión</strong> que reafirma postura y propone.</li>
-          <li>Uso de conectores (consecuencia, contraste, adición) y registro formal.</li>
-          <li>Evitar falacias y generalizaciones; apoyar con evidencia verificable.</li>
-        </ul>
-      </div>
-    ),
-  },
-  seccion7: {
-    title: "TEMA 9. REGLAS DE SINTAXIS Y MORFOLOGÍA.",
-    summary: (
-      <div className="space-y-4 text-base leading-relaxed">
-        <ul className="list-disc pl-5 space-y-1">
-          <li><strong>Sintaxis</strong>: orden y relación de palabras; funciones (sujeto, predicado, complementos).</li>
-          <li><strong>Morfología</strong>: estructura de palabras (raíz, prefijos, sufijos) y procesos de formación.</li>
-          <li><strong>Concordancia</strong>: coincidencia número/persona entre sujeto y verbo.</li>
-          <li><strong>Prefijo</strong>: elemento que se antepone a la raíz para modificar significado.</li>
-        </ul>
-      </div>
-    ),
-  },
-  seccion8: {
-    title: "TEMA 10. COHESIÓN EN TEXTOS",
-    summary: (
-      <div className="space-y-4 text-base leading-relaxed">
-        <h4 className="font-semibold">Mecanismos de cohesión</h4>
-        <ul className="list-disc pl-5 space-y-1">
-          <li><strong>Conectores</strong>: adición (además), contraste (sin embargo), causa (porque), consecuencia (por lo tanto), orden (primero/luego), ejemplificación (por ejemplo).</li>
-          <li><strong>Referencias</strong>: anáfora (retoma elemento previo), catáfora (anticipa), elipsis (omisión recuperable), sustitución léxica y sinonimia.</li>
-          <li><strong>Puntuación</strong>: dos puntos para introducir listas/explicaciones; punto y coma para separar ideas relacionadas; comas (enumerativas/explicativas) para claridad.</li>
-        </ul>
-      </div>
-    ),
-  },
-};
+        /* Página de Quiz (quiz.html) */
+        .quiz-container {
+            padding: 20px;
+        }
 
-// —— Componente de Quiz reutilizable —— //
-function Quiz({ bank, numQuestions, title, onBack }: { bank: Question[]; numQuestions: number; title: string; onBack: () => void }) {
-  const [seed, setSeed] = useState(0); // para regenerar versión
-  const questions = useMemo(() => {
-    const picked = shuffleArray(bank).slice(0, numQuestions).map((q) => {
-      const shuffled = shuffleArray(q.options);
-      const correctText = q.options[q.answerIndex];
-      const newAnswerIndex = shuffled.findIndex((o) => o === correctText);
-      return { ...q, options: shuffled, answerIndex: newAnswerIndex };
-    });
-    return picked;
-  }, [bank, numQuestions, seed]);
+        #question-header {
+            margin-bottom: 20px;
+        }
 
-  const [answers, setAnswers] = useState<(number | null)[]>(Array(questions.length).fill(null));
-  const [submitted, setSubmitted] = useState(false);
+        #question-text {
+            font-size: 1.5em;
+            margin-bottom: 10px;
+        }
 
-  const score = useMemo(() => {
-    if (!submitted) return 0;
-    return questions.reduce((acc, q, i) => {
-      const chosen = answers[i];
-      return acc + (chosen === q.answerIndex ? 1 : 0);
-    }, 0);
-  }, [submitted, answers, questions]);
+        #question-counter {
+            font-size: 0.9em;
+            color: #777;
+            text-align: right;
+        }
 
-  function handleSelect(qi: number, oi: number) {
-    if (submitted) return;
-    const copy = [...answers];
-    copy[qi] = oi;
-    setAnswers(copy);
-  }
+        #options-container {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
 
-  function handleSubmit() {
-    setSubmitted(true);
-  }
+        #options-container li {
+            background-color: #f9f9f9;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: background-color 0.3s ease, border-color 0.3s ease;
+        }
 
-  function regenerate() {
-    setSeed((s) => s + 1);
-    setAnswers(Array(numQuestions).fill(null));
-    setSubmitted(false);
-  }
+        #options-container li:hover {
+            background-color: #e9f1f7;
+        }
 
-  return (
-    <div className="max-w-3xl mx-auto p-4">
-      <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-2xl font-semibold">{title}</h2>
-        <button onClick={onBack} className="px-3 py-1.5 rounded-xl bg-gray-100 hover:bg-gray-200 transition">← Regresar</button>
-      </div>
+        #options-container li.selected {
+            background-color: #d4e6f1;
+            border-color: #005a9c;
+            font-weight: bold;
+        }
 
-      <div className="space-y-6">
-        {questions.map((q, qi) => (
-          <div key={qi} className="rounded-2xl p-4 shadow border">
-            <div className="font-medium mb-3">{qi + 1}. {q.prompt}</div>
-            <div className="grid gap-2">
-              {q.options.map((opt, oi) => (
-                <label key={oi} className={`flex items-center gap-2 rounded-xl border p-2 cursor-pointer ${answers[qi] === oi ? "bg-blue-50 border-blue-300" : "hover:bg-gray-50"}`}>
-                  <input
-                    type="radio"
-                    className="accent-black"
-                    checked={answers[qi] === oi}
-                    onChange={() => handleSelect(qi, oi)}
-                  />
-                  <span>{opt}</span>
-                </label>
-              ))}
+        #submit-btn {
+            width: 100%;
+            padding: 15px;
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #fff;
+            background-color: #007bff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: background-color 0.3s ease;
+        }
+
+        #submit-btn:hover {
+            background-color: #0056b3;
+        }
+
+        /* Resultados del Quiz */
+        .results-container {
+            padding: 20px;
+        }
+
+        #results-score {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #003b6f;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        #incorrect-answers h3 {
+            color: #d9534f; /* Rojo */
+            border-bottom: 2px solid #f5c6cb;
+            padding-bottom: 5px;
+        }
+
+        #incorrect-answers ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        #incorrect-answers li {
+            background-color: #fdf7f7;
+            border: 1px solid #f5c6cb;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+        }
+
+        #incorrect-answers .question {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        #incorrect-answers .user-answer {
+            color: #d9534f;
+        }
+
+        #incorrect-answers .correct-answer {
+            color: #28a745;
+            font-weight: 500;
+        }
+        
+        /* Sistema de "Páginas"
+          Oculta todas las secciones de contenido por defecto.
+          JavaScript mostrará la que corresponda.
+        */
+        .page-content {
+            display: none;
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- 
+      CONTENEDOR PÁGINA 1: PRINCIPAL
+    -->
+    <div id="page-main" class="page-content">
+        <header>
+            <h1>Guía de Estudio Español</h1>
+        </header>
+        
+        <main>
+            <section class="video-container">
+                <h2>Resumen General</h2>
+                <!-- 
+                    IMPORTANTE: 
+                    No puedo enlazar un video local. He puesto un placeholder.
+                    Debes subir tu video (ej. a YouTube, Vimeo, o tu GitHub) 
+                    y pegar el enlace correcto en 'src'.
+                -->
+                <video controls poster="https://placehold.co/700x394/003b6f/ffffff?text=Video+de+Resumen">
+                    <source src="videos/resumen.mp4" type="video/mp4">
+                    Tu navegador no soporta este video.
+                </video>
+            </section>
+            
+            <nav class="main-nav">
+                <h2>Temario</h2>
+                <!-- Los enlaces ahora llaman a la función JavaScript showPage() -->
+                <a href="#" onclick="showPage('page-tema1-2')" class="nav-button">TEMA 1 Y 2. TEXTOS DESCRIPTIVOS, EXPOSITIVOS Y ARGUMENTATIVOS.</a>
+                <a href="#" onclick="showPage('page-tema3')" class="nav-button">TEMA 3. ESTRUCTURA DE UNA NARRACIÓN Y UNA OBRA DRAMÁTICA.</a>
+                <a href="#" onclick="showPage('page-tema4')" class="nav-button">TEMA 4. FUNCIONES ESTÉTICAS Y SIMBÓLICAS.</a>
+                <a href="#" onclick="showPage('page-tema5')" class="nav-button">TEMA 5. TEMAS LITERARIOS EN TEXTOS NARRATIVOS, LÍRICOS Y DRAMÁTICOS.</a>
+                <a href="#" onclick="showPage('page-tema6-7')" class="nav-button">TEMA 6 Y 7. ELEMENTOS BÁSICOS DE DOCUMENTOS LEGALES Y ADMINISTRATIVOS SENCILLOS.</a>
+                <a href="#" onclick="showPage('page-tema8')" class="nav-button">TEMA 8. ARTÍCULO DE OPINIÓN</a>
+                <a href="#" onclick="showPage('page-tema9')" class="nav-button">TEMA 9. REGLAS DE SINTAXIS Y MORFOLOGÍA.</a>
+                <a href="#" onclick="showPage('page-tema10')" class="nav-button">TEMA 10. COHESIÓN EN TEXTOS</a>
+            </nav>
+            
+            <section class="general-quiz">
+                <h2>Evaluación General</h2>
+                <p>¿Listo para probar todo lo que aprendiste? Realiza el examen general.</p>
+                <!-- Este enlace ahora llama a la función startQuiz() -->
+                <a href="#" onclick="startQuiz('general')" class="quiz-button general">Realizar Quiz General (20 Preguntas)</a>
+            </section>
+        </main>
+        
+        <footer>
+            <p>Guía de estudio para 2° de Secundaria</p>
+        </footer>
+    </div>
+    
+    <!-- 
+      CONTENEDOR PÁGINA 2: TEMA 1 Y 2
+    -->
+    <div id="page-tema1-2" class="page-content">
+        <header>
+            <h1>TEMA 1 Y 2. TEXTOS DESCRIPTIVOS, EXPOSITIVOS Y ARGUMENTATIVOS.</h1>
+        </header>
+
+        <main>
+            <section class="content-section">
+                <p>Para comprender mejor un texto, es clave distinguir <strong>ideas principales</strong> (la columna vertebral) y <strong>secundarias</strong> (que apoyan o desarrollan las principales).</p>
+                <ul>
+                    <li>En <strong>textos argumentativos</strong>, se deben identificar <strong>tesis</strong> (opinión) y <strong>argumentos</strong> (información sustentada en datos, lógica o autoridad).</li>
+                    <li>Los <strong>textos expositivos</strong> se enfocan en <strong>informar objetivamente</strong>, mientras que los <strong>argumentativos</strong> buscan <strong>persuadir</strong>, presentando una estructura de introducción, cuerpo y conclusión para defender una postura.</li>
+                </ul>
+            </section>
+
+            <section class="content-section">
+                <h2>Relaciones entre ideas principales y secundarias</h2>
+                <h3>Idea principal</h3>
+                <p>Es el concepto central, la información clave que da sentido al texto. Si se elimina, el texto pierde su sentido.</p>
+                <h3>Idea secundaria</h3>
+                <p>Son los detalles que apoyan, explican o desarrollan la idea principal.</p>
+                <p><strong>Cómo evaluarlas:</strong> Busca la idea central de cada párrafo. Las ideas secundarias se presentan para dar contexto o sustentar la idea principal.</p>
+            </section>
+
+            <section class="content-section">
+                <h2>Diferencia información sustentada de opiniones</h2>
+                <h3>Información sustentada</h3>
+                <p>Hechos verificables, datos, estadísticas, evidencia y referencias a fuentes confiables.</p>
+                <h3>Opinión</h3>
+                <p>Puntos de vista personales, creencias o juicios del autor, que no siempre tienen un sustento objetivo.</p>
+                <p><strong>Cómo distinguirlas:</strong> Busca frases que presenten una postura o juicio ("creo que", "opino que") frente a frases que describen o informan. Los argumentos lógicos y los ejemplos son formas de sustentar opiniones.</p>
+            </section>
+
+            <section class="content-section">
+                <h2>La estructura de textos expositivos y argumentativos</h2>
+                <h3>Textos Expositivos</h3>
+                <ul>
+                    <li><strong>Propósito:</strong> Informar de forma objetiva sobre un tema.</li>
+                    <li><strong>Estructura:</strong> Introducción, desarrollo y conclusión.</li>
+                    <li><strong>Organización:</strong> Clara y ordenada, con lenguaje preciso y formal.</li>
+                </ul>
+                <h3>Textos Argumentativos</h3>
+                <ul>
+                    <li><strong>Propósito:</strong> Persuadir al lector o escuchar de una tesis o postura.</li>
+                    <li><strong>Estructura:</strong> Introducción (tesis), cuerpo argumentativo (argumentos y pruebas) y conclusión.</li>
+                    <li><strong>Organización:</strong> Más compleja, con argumentos que apoyan la tesis para convencer.</li>
+                </ul>
+            </section>
+            
+            <section class="content-section">
+                <h2>Los recursos textuales para el contenido</h2>
+                <h3>Ejemplos y explicaciones</h3>
+                <p>Sirven para aclarar conceptos abstractos, hacer las ideas más comprensibles y ejemplificar puntos clave.</p>
+                <h3>Tablas e imágenes</h3>
+                <p>Ofrecen información de manera visual, haciendo la comprensión más rápida y eficaz, y aportando datos de manera ordenada.</p>
+                <h3>Valor de la pertinencia</h3>
+                <p>Evalúa si el recurso es necesario para la comprensión o si añade valor al texto, o si es un distractor. Un buen recurso textual debe ser claro, conciso y estar bien integrado con el contenido.</p>
+            </section>
+
+            <section class="content-section">
+                <h2>Uso de conectores discursivos</h2>
+                <p><strong>¿Qué son?</strong> Palabras o expresiones que enlazan oraciones, párrafos y diferentes ideas, estableciendo relaciones lógicas (causa-consecuencia, adición, contraste).</p>
+                <p><strong>¿Por qué?</strong> Garantizan la cohesión y fluidez del texto, facilitando la comprensión de las relaciones entre las ideas.</p>
+                <p><strong>Ejemplo:</strong> "La sequía está afectando la producción de los cultivos; <strong>sin embargo</strong>, las inundaciones también representan un problema grave para la agricultura." Otros ejemplos: "<strong>Además</strong>, la escasez de agua...", "<strong>En consecuencia</strong>, muchos agricultores...".</p>
+            </section>
+
+            <section class="content-section">
+                <h2>Redacta explicaciones sobre elementos del tema</h2>
+                <p><strong>¿Qué es?</strong> Desarrollar cada punto del esquema con información detallada, definiendo conceptos, describiendo procesos o explicando causas y efectos.</p>
+                <p><strong>¿Por qué?</strong> Profundiza en el tema y proporciona los argumentos necesarios para sustentar las ideas presentadas.</p>
+            </section>
+
+            <!-- Quiz Link -->
+            <section class="quiz-link">
+                <h2>Ponte a Prueba</h2>
+                <p>Verifica lo que aprendiste sobre estos tipos de texto.</p>
+                <a href="#" onclick="startQuiz('tema1-2')" class="quiz-button">Realizar Quiz (5 Preguntas)</a>
+            </section>
+            
+            <a href="#" onclick="showPage('page-main')" class="nav-button back-button">Volver al Temario</a>
+        </main>
+    </div>
+    
+    <!-- 
+      CONTENEDOR PÁGINA 3: TEMA 3
+    -->
+    <div id="page-tema3" class="page-content">
+        <header>
+            <h1>TEMA 3. ESTRUCTURA DE UNA NARRACIÓN Y UNA OBRA DRAMÁTICA.</h1>
+        </header>
+
+        <main>
+            <section class="content-section">
+                <ul>
+                    <li>La <strong>narración</strong> y el <strong>drama</strong> se diferencian en que la narración cuenta una historia a través de un <strong>narrador en prosa</strong>, mientras que el drama se presenta mediante <strong>diálogos y acciones</strong> de personajes para ser representado en un escenario.</li>
+                    <li>En la <strong>poesía</strong>, la métrica, la rima y el verso libre generan ritmos y significados distintos.</li>
+                    <li>El <strong>diálogo y los monólogos</strong> en el drama sirven para desarrollar la trama, revelar la personalidad de los personajes y exponer sus conflictos internos.</li>
+                </ul>
+            </section>
+
+            <section class="content-section">
+                <h2>Estructura: Narración vs. Drama</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Característica</th>
+                            <th>Narración</th>
+                            <th>Drama</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Estructura general</strong></td>
+                            <td>Introducción, nudo (desarrollo) y desenlace.</td>
+                            <td>Estructura dramática: acción, diálogo entre personajes, y acotaciones.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Desarrollo de la trama</strong></td>
+                            <td>Se desarrolla a través de la voz de un narrador que describe los hechos, personajes y ambientes.</td>
+                            <td>Se desarrolla principalmente a través del diálogo y las acciones de los personajes.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <section class="content-section">
+                <h2>Análisis de métrica, rima y verso libre</h2>
+                <h3>Métrica</h3>
+                <p>La métrica se refiere a la <strong>medida de los versos</strong>, es decir, el número de sílabas que los componen. Su uso crea un ritmo regular que puede dar musicalidad.</p>
+                <h3>Rima</h3>
+                <p>Es la <strong>repetición de sonidos</strong> al final de los versos. La rima consonante es la más estricta; la asonante es más flexible.</p>
+                <h3>Verso libre</h3>
+                <p>Es aquel que <strong>no está sujeto a métrica ni rima</strong>. Permite mayor libertad creativa y se enfoca en el significado.</p>
+            </section>
+
+            <section class="content-section">
+                <h2>Función del diálogo y los monólogos</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Elemento</th>
+                            <th>Función dentro de la obra</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Diálogos</strong></td>
+                            <td>Permiten a los personajes interactuar, revelando sus personalidades y conflictos. Son la forma principal en que se desarrolla la trama.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Monólogos</strong></td>
+                            <td>Son discursos de un solo personaje. <strong>Revelan sus pensamientos más íntimos</strong> y sus sentimientos.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <!-- Quiz Link -->
+            <section class="quiz-link">
+                <h2>Ponte a Prueba</h2>
+                <p>Verifica lo que aprendiste sobre narración y drama.</p>
+                <a href="#" onclick="startQuiz('tema3')" class="quiz-button">Realizar Quiz (5 Preguntas)</a>
+            </section>
+            
+            <a href="#" onclick="showPage('page-main')" class="nav-button back-button">Volver al Temario</a>
+        </main>
+    </div>
+    
+    <!-- 
+      CONTENEDOR PÁGINA 4: TEMA 4
+    -->
+    <div id="page-tema4" class="page-content">
+        <header>
+            <h1>TEMA 4. FUNCIONES ESTÉTICAS Y SIMBÓLICAS.</h1>
+        </header>
+
+        <main>
+            <section class="content-section">
+                <h2>¿Qué son los recursos literarios y para qué sirven?</h2>
+                <p>Los <strong>recursos literarios</strong> son formas especiales de usar el lenguaje en textos como cuentos, poemas y obras de teatro.</p>
+                <p>Sirven para:</p>
+                <ul>
+                    <li><strong>Embellecer el texto</strong> (hacerlo más bonito y agradable).</li>
+                    <li><strong>Transmitir emociones</strong> (como alegría, tristeza, miedo).</li>
+                    <li><strong>Dar más significado</strong> (mostrar ideas profundas o abstractas).</li>
+                </ul>
+            </section>
+
+            <section class="content-section">
+                <h2>Funciones de los recursos literarios</h2>
+                <h3>Funciones estéticas</h3>
+                <p>Son las que hacen que el texto se vea y se sienta mejor.</p>
+                <ul>
+                    <li><strong>Embellecimiento:</strong> Usar palabras bonitas o expresivas. <strong>Ejemplo:</strong> “Tus ojos son dos luceros”.</li>
+                    <li><strong>Creación de atmósfera y estilo:</strong> Ayudan a imaginar el lugar o el tono.</li>
+                    <li><strong>Expresividad e intensidad:</strong> Hacen que lo que se dice sea más fuerte. <strong>Ejemplo:</strong> “Lloraba mares”.</li>
+                </ul>
+                
+                <h3>Funciones simbólicas</h3>
+                <p>Son las que dan más profundidad y significado al texto.</p>
+                <ul>
+                    <li><strong>Varios niveles de significado:</strong> Una palabra o imagen puede representar muchas cosas. <strong>Ejemplo:</strong> una paloma puede significar paz.</li>
+                    <li><strong>Expresar ideas abstractas:</strong> Ayudan a decir cosas difíciles (como el amor) con imágenes fáciles. <strong>Ejemplo:</strong> “El corazón roto”.</li>
+                    <li><strong>Transmitir emociones:</strong> Un paisaje oscuro puede hacer sentir tristeza o miedo.</li>
+                </ul>
+            </section>
+
+            <section class="content-section">
+                <h2>¿Cómo se usan en cada tipo de texto?</h2>
+                <ul>
+                    <li><strong>En poemas (líricos):</strong> Se usan <strong>metáforas</strong> y <strong>símbolos</strong> para expresar sentimientos.</li>
+                    <li><strong>En cuentos (narrativos):</strong> Se repiten <strong>motivos</strong> (ideas u objetos) para reforzar el tema. Ejemplo: la lluvia como símbolo de tristeza.</li>
+                    <li><strong>En obras de teatro (dramáticos):</strong> Se usan <strong>acotaciones</strong> (instrucciones que indican cómo actuar). Ejemplo: <em>(grita con enojo)</em>.</li>
+                </ul>
+            </section>
+            
+            <section class="content-section">
+                <h2>Indicadores para analizar los textos</h2>
+                <ol>
+                    <li>
+                        <strong>Símbolos y metáforas en poemas</strong>
+                        <ul>
+                            <li><strong>Símbolo:</strong> Algo que representa otra cosa. (Rosa = amor).</li>
+                            <li><strong>Metáfora:</strong> Comparación sin usar “como”. (Tus ojos son estrellas).</li>
+                        </ul>
+                    </li>
+                    <li>
+                        <strong>Motivos y temas en cuentos</strong>
+                        <ul>
+                            <li><strong>Motivo:</strong> Algo que se repite (un objeto, una palabra).</li>
+                            <li><strong>Tema:</strong> La idea principal del texto (amistad, justicia, etc.).</li>
+                        </ul>
+                    </li>
+                    <li>
+                        <strong>Acotaciones en obras de teatro</strong>
+                        <ul>
+                            <li>Son instrucciones que explican cómo se mueve, habla o actúa un personaje. No se leen en voz alta.</li>
+                            <li>Ayudan a mostrar emociones y crear el ambiente.</li>
+                        </ul>
+                    </li>
+                </ol>
+            </section>
+
+            <!-- Quiz Link -->
+            <section class="quiz-link">
+                <h2>Ponte a Prueba</h2>
+                <p>Verifica lo que aprendiste sobre las funciones del lenguaje.</p>
+                <a href="#" onclick="startQuiz('tema4')" class="quiz-button">Realizar Quiz (5 Preguntas)</a>
+            </section>
+            
+            <a href="#" onclick="showPage('page-main')" class="nav-button back-button">Volver al Temario</a>
+        </main>
+    </div>
+    
+    <!-- 
+      CONTENEDOR PÁGINA 5: TEMA 5
+    -->
+    <div id="page-tema5" class="page-content">
+        <header>
+            <h1>TEMA 5. TEMAS LITERARIOS EN TEXTOS NARRATIVOS, LÍRICOS Y DRAMÁTICOS.</h1>
+        </header>
+
+        <main>
+            <section class="content-section">
+                <p>Este tema analiza cómo los temas de las obras literarias (novelas, poemas, obras de teatro) se <strong>transforman al ser adaptados</strong> en otras formas de arte, como el cine, la pintura o la música.</p>
+                <p>Se busca identificar las <strong>modificaciones y reinterpretaciones</strong> que ocurren al pasar de un medio a otro.</p>
+                
+                <h3>Elementos clave del análisis:</h3>
+                <ul>
+                    <li><strong>Temas literarios:</strong> Ideas, conceptos o mensajes profundos.</li>
+                    <li><strong>Adaptación:</strong> El proceso de trasladar una obra a otro medio, conservando la esencia del tema.</li>
+                    <li><strong>Reinterpretación:</strong> La forma en que el tema es modificado por el artista que realiza la adaptación.</li>
+                    <li><strong>Transformaciones:</strong> Los cambios que el tema experimenta al pasar de un medio a otro.</li>
+                </ul>
+            </section>
+
+            <section class="content-section">
+                <h2>1. Representación de un tema en novela vs. cine</h2>
+                <h3>Novela:</h3>
+                <ul>
+                    <li><strong>Profundiza el tema:</strong> Permite una exploración exhaustiva, usando monólogos, reflexiones internas y descripciones detalladas.</li>
+                    <li><strong>Enfoque narrativo:</strong> El narrador tiene el control para presentar los eventos.</li>
+                </ul>
+                <h3>Adaptación cinematográfica:</h3>
+                <ul>
+                    <li><strong>Enfoque visual y sensorial:</strong> El tema se representa a través de imágenes, sonidos y música.</li>
+                    <li><strong>Compresión y variación:</strong> Se debe reducir o resumir la historia para un tiempo limitado, lo que puede implicar la eliminación de tramas secundarias.</li>
+                </ul>
+            </section>
+
+            <section class="content-section">
+                <h2>2. Cambios estructurales entre obra teatral y adaptación cinematográfica</h2>
+                <h3>Obra teatral:</h3>
+                <ul>
+                    <li><strong>Estructura en actos y escenas:</strong> Se divide en partes que se presentan en un escenario limitado.</li>
+                    <li><strong>Planteamiento, desarrollo, nudo y desenlace:</strong> Sigue una estructura clásica en un espacio y tiempo continuo.</li>
+                </ul>
+                <h3>Adaptación cinematográfica:</h3>
+                <ul>
+                    <li><strong>Montaje y cambios de escena:</strong> Se emplean técnicas para crear un ritmo narrativo dinámico.</li>
+                    <li><strong>Recursos visuales:</strong> El cine puede usar recursos como el <strong>flashback</strong> o la superposición de imágenes para jugar con el tiempo y el espacio.</li>
+                </ul>
+            </section>
+            
+            <section class="content-section">
+                <h2>3. Diferencias en la representación de personajes en novela vs. obra de arte visual</h2>
+                <h3>Novela:</h3>
+                <ul>
+                    <li><strong>Descripción detallada:</strong> Los personajes se construyen con descripciones de su apariencia, personalidad, pensamientos y motivaciones.</li>
+                </ul>
+                <h3>Obra de arte visual (cuadro o pintura):</h3>
+                <ul>
+                    <li><strong>Representación estática y visual:</strong> La imagen es estática y depende del artista para capturar la esencia.</li>
+                    <li><strong>Interpretación subjetiva:</strong> El espectador debe inferir la personalidad del personaje.</li>
+                </ul>
+            </section>
+
+            <!-- Quiz Link -->
+            <section class="quiz-link">
+                <h2>Ponte a Prueba</h2>
+                <p>Verifica lo que aprendiste sobre adaptaciones literarias.</p>
+                <a href="#" onclick="startQuiz('tema5')" class="quiz-button">Realizar Quiz (5 Preguntas)</a>
+            </section>
+            
+            <a href="#" onclick="showPage('page-main')" class="nav-button back-button">Volver al Temario</a>
+        </main>
+    </div>
+    
+    <!-- 
+      CONTENEDOR PÁGINA 6: TEMA 6 Y 7
+    -->
+    <div id="page-tema6-7" class="page-content">
+        <header>
+            <h1>TEMA 6 Y 7. ELEMENTOS BÁSICOS DE DOCUMENTOS LEGALES Y ADMINISTRATIVOS SENCILLOS.</h1>
+        </header>
+
+        <main>
+            <section class="content-section">
+                <p><strong>Contrato:</strong> es un acuerdo legal entre dos o más partes, donde cada una se compromete a dar, hacer o no hacer algo específico, creando así obligaciones y derechos.</p>
+                <p>Un contrato se compone de partes esenciales como <strong>cláusulas</strong> (definición de derechos y obligaciones), <strong>obligaciones</strong> (acciones concretas) y <strong>firmas</strong> (consentimiento).</p>
+                <p>La <strong>claridad y precisión</strong> en un acuerdo son vitales para que se cumplan las normas legales y se eviten malentendidos.</p>
+            </section>
+
+            <section class="content-section">
+                <h2>Partes Esenciales de un Contrato</h2>
+                <h3>Cláusulas</h3>
+                <p>Son los <strong>términos y condiciones específicos</strong> del acuerdo, donde se establecen los derechos, deberes y responsabilidades. Su propósito es definir detalladamente lo que cada parte debe hacer o recibir.</p>
+                
+                <h3>Obligaciones</h3>
+                <p>Son las <strong>acciones concretas y los compromisos</strong> que cada parte debe cumplir para que el contrato se realice. Su propósito es asegurar que ambas partes cumplan con lo acordado.</p>
+
+                <h3>Firmas</h3>
+                <p>Es la manifestación del <strong>acuerdo y el consentimiento</strong> de las partes. Su propósito es validar que las partes están de acuerdo con los términos.</p>
+            </section>
+
+            <section class="content-section">
+                <h2>Análisis de la Redacción de un Acuerdo</h2>
+                <p>La redacción de un acuerdo legal se enfoca en presentar la información de forma que se cumplan las leyes. Incluye:</p>
+                <ul>
+                    <li><strong>Identificación clara de las partes:</strong> Todos los datos necesarios.</li>
+                    <li><strong>Uso de un lenguaje preciso:</strong> Se utilizan términos técnicos legales para evitar ambigüedades.</li>
+                    <li><strong>Estructura organizada:</strong> Como en un <strong>proemio</strong> (datos esenciales), declaraciones y cláusulas.</li>
+                    <li><strong>Cumplimiento de la ley:</strong> El contenido debe estar alineado con la normativa legal vigente.</li>
+                </ul>
+            </section>
+
+            <section class="content-section">
+                <h2>Importancia de la Claridad y Precisión</h2>
+                <ul>
+                    <li><strong>Evitar malentendidos:</strong> Un lenguaje claro reduce la posibilidad de interpretar mal los términos.</li>
+                    <li><strong>Garantizar el cumplimiento:</strong> Cuando las obligaciones están bien definidas, es más fácil cumplirlas.</li>
+                    <li><strong>Prevenir disputas legales:</strong> Un documento claro sirve como guía y precedente legal.</li>
+                    <li><strong>Proteger los derechos:</strong> Define claramente los derechos de cada parte.</li>
+                </ul>
+            </section>
+
+            <!-- Quiz Link -->
+            <section class="quiz-link">
+                <h2>Ponte a Prueba</h2>
+                <p>Verifica lo que aprendiste sobre documentos legales.</p>
+                <a href="#" onclick="startQuiz('tema6-7')" class="quiz-button">Realizar Quiz (5 Preguntas)</a>
+            </section>
+            
+            <a href="#" onclick="showPage('page-main')" class="nav-button back-button">Volver al Temario</a>
+        </main>
+    </div>
+    
+    <!-- 
+      CONTENEDOR PÁGINA 7: TEMA 8
+    -->
+    <div id="page-tema8" class="page-content">
+        <header>
+            <h1>TEMA 8. ARTÍCULO DE OPINIÓN</h1>
+        </header>
+
+        <main>
+            <section class="content-section">
+                <h2>¿Qué es un artículo de opinión?</h2>
+                <p>Es un <strong>texto argumentativo</strong> en el que el autor expresa su <strong>punto de vista</strong> sobre un tema actual, con argumentos sólidos y lenguaje formal.</p>
+                <p><strong>Estructura:</strong></p>
+                <ol>
+                    <li><strong>Introducción:</strong> Presenta el tema y la postura del autor.</li>
+                    <li><strong>Desarrollo:</strong> Expone argumentos con ejemplos, datos o citas.</li>
+                    <li><strong>Conclusión:</strong> Resume la postura y refuerza la idea principal.</li>
+                </ol>
+                <p><strong>Tipos de conectores:</strong></p>
+                <ul>
+                    <li><strong>Consecuencia:</strong> “por lo tanto”, “en consecuencia”. Indican el resultado o efecto.</li>
+                    <li><strong>Contraste:</strong> “sin embargo”, “aunque”. Señalan una contradicción.</li>
+                </ul>
+            </section>
+            
+            <section class="content-section">
+                <h2>¿Qué es una presentación de proyecto grupal?</h2>
+                <p>Es una exposición oral o escrita en la que se presentan los resultados de una investigación realizada en equipo.</p>
+                <p>Se recomienda usar <strong>vocabulario técnico</strong>, que es el conjunto de palabras y expresiones específicas de un área de conocimiento (ej. "hipótesis" en ciencias, "metáfora" en literatura). Sirve para comunicar ideas con precisión.</p>
+                <p>También se debe organizar la información con <strong>claridad</strong> (fácil de entender) y <strong>coherencia</strong> (relación lógica entre ideas).</p>
+            </section>
+
+            <section class="content-section">
+                <h2>¿Qué es un debate?</h2>
+                <p>Es una <strong>discusión formal</strong> entre dos o más personas que defienden <strong>posturas opuestas</strong> sobre un tema. El tema debe ser polémico (que permita opiniones a favor y en contra).</p>
+                <p><strong>Partes de un debate formal:</strong></p>
+                <ol>
+                    <li><strong>Presentación del tema.</strong></li>
+                    <li><strong>Introducción de los equipos</strong> (a favor y en contra).</li>
+                    <li><strong>Exposición de argumentos</strong> (con datos, ejemplos, etc.).</li>
+                    <li><strong>Refutación</strong> (cada equipo responde a los argumentos del otro).</li>
+                    <li><strong>Conclusión</strong> (cada equipo resume su postura).</li>
+                </ol>
+                <p><strong>Roles en el debate:</strong></p>
+                <ul>
+                    <li><strong>Moderador:</strong> Dirige el debate, da la palabra y mantiene el orden.</li>
+                    <li><strong>Participantes:</strong> Defienden sus posturas.</li>
+                    <li><strong>Público (opcional):</strong> Escucha o hace preguntas.</li>
+                </ul>
+            </section>
+            
+            <section class="content-section">
+                <h2>¿Qué es un texto descriptivo?</h2>
+                <p>Es un texto que <strong>detalla las características</strong> de personas, lugares, objetos o situaciones, utilizando un lenguaje claro y ordenado. Se recomienda usar conectores de orden (en primer lugar, luego, por último) e incluir detalles sensoriales.</p>
+            </section>
+            
+            <section class="content-section">
+                <h2>Produce la reseña de un libro</h2>
+                <p><strong>¿Qué es una reseña?</strong> Es un texto que <strong>resume, analiza y valora</strong> una obra literaria, destacando sus aspectos más importantes.</p>
+                <p><strong>Estructura:</strong></p>
+                <ol>
+                    <li><strong>Datos generales:</strong> Título, autor, género, etc.</li>
+                    <li><strong>Resumen:</strong> Breve descripción de la trama (sin revelar el final).</li>
+                    <li><strong>Análisis:</strong> Opinión sobre personajes, estilo, mensaje.</li>
+                    <li><strong>Conclusión:</strong> Valoración personal y recomendación.</li>
+                </ol>
+            </section>
+
+            <!-- Quiz Link -->
+            <section class="quiz-link">
+                <h2>Ponte a Prueba</h2>
+                <p>Verifica lo que aprendiste sobre opinión, debate y reseñas.</p>
+                <a href="#" onclick="startQuiz('tema8')" class="quiz-button">Realizar Quiz (5 Preguntas)</a>
+            </section>
+            
+            <a href="#" onclick="showPage('page-main')" class="nav-button back-button">Volver al Temario</a>
+        </main>
+    </div>
+    
+    <!-- 
+      CONTENEDOR PÁGINA 8: TEMA 9
+    -->
+    <div id="page-tema9" class="page-content">
+        <header>
+            <h1>TEMA 9. REGLAS DE SINTAXIS Y MORFOLOGÍA.</h1>
+        </header>
+
+        <main>
+            <section class="content-section">
+                <h2>Sintaxis</h2>
+                <p>Es el <strong>orden y la relación de las palabras</strong> en una oración para que tenga sentido.</p>
+                <ul>
+                    <li>Incorrecto: “Libro un lee María.”</li>
+                    <li>Correcto: “María lee un libro.”</li>
+                </ul>
+            </section>
+
+            <section class="content-section">
+                <h2>Morfología</h2>
+                <p>Es la parte de la gramática que estudia la <strong>estructura y forma de las palabras</strong>, cómo se forman y cómo cambian.</p>
+                <p>Ejemplo: La palabra “<strong>niños</strong>”</p>
+                <ul>
+                    <li>“<strong>niñ</strong>” → raíz (significado)</li>
+                    <li>“<strong>-o</strong>” → indica género masculino</li>
+                    <li>“<strong>-s</strong>” → indica plural</li>
+                </ul>
+            </section>
+
+            <section class="content-section">
+                <h2>Oraciones y Términos Técnicos</h2>
+                <p>Una <strong>oración completa</strong> tiene sujeto y predicado. Una oración incompleta o mal estructurada confunde al lector.</p>
+                <p>Los <strong>términos técnicos</strong> son palabras propias de un tema (ciencia, arte, etc.) que dan <strong>precisión y formalidad</strong>. Sirven para que el lector entienda exactamente de qué hablas y para evitar confusiones.</p>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>General (Vago)</th>
+                            <th>Técnico o específico (Preciso)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Las plantas crecen con la luz.</td>
+                            <td>Las plantas realizan la <strong>fotosíntesis</strong> gracias a la luz solar.</td>
+                        </tr>
+                        <tr>
+                            <td>Los animales cambian para vivir.</td>
+                            <td>Los animales se adaptan a su entorno mediante la <strong>evolución</strong>.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+            
+            <section class="content-section">
+                <h2>Concordancia entre los tiempos verbales</h2>
+                <p>La <strong>concordancia verbal</strong> se refiere a la relación entre el sujeto y el verbo, asegurando que coincidan en <strong>número</strong> (singular o plural) y <strong>persona</strong>.</p>
+                <p>La <strong>concordancia temporal</strong> significa mantener una secuencia lógica de los tiempos verbales. Si comienzas en presente, continúa en presente; si narras en pasado, mantén el pasado. Esto evita que el texto sea confuso.</p>
+            </section>
+
+            <!-- Quiz Link -->
+            <section class="quiz-link">
+                <h2>Ponte a Prueba</h2>
+                <p>Verifica lo que aprendiste sobre sintaxis y morfología.</p>
+                <a href="#" onclick="startQuiz('tema9')" class="quiz-button">Realizar Quiz (5 Preguntas)</a>
+            </section>
+            
+            <a href="#" onclick="showPage('page-main')" class="nav-button back-button">Volver al Temario</a>
+        </main>
+    </div>
+    
+    <!-- 
+      CONTENEDOR PÁGINA 9: TEMA 10
+    -->
+    <div id="page-tema10" class="page-content">
+        <header>
+            <h1>TEMA 10. COHESIÓN EN TEXTOS</h1>
+        </header>
+
+        <main>
+            <section class="content-section">
+                <h2>Conectores discursivos</h2>
+                <p><strong>¿Qué son?</strong> Son palabras o frases que unen ideas y ayudan a que los textos tengan coherencia y fluidez.</p>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Conector</th>
+                            <th>Función</th>
+                            <th>Ejemplo correcto</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Sin embargo</strong></td>
+                            <td>Contrastar una idea</td>
+                            <td>"Me gusta leer. Sin embargo, prefiero escribir."</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Por lo tanto</strong></td>
+                            <td>Indicar una consecuencia</td>
+                            <td>"Estudió mucho, por lo tanto, aprobó el examen."</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Además</strong></td>
+                            <td>Agregar información</td>
+                            <td>"Me gusta el cine. Además, disfruto leer novelas."</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <section class="content-section">
+                <h2>Signos de puntuación para organizar ideas</h2>
+                <p><strong>¿Para qué sirven?</strong> Ayudan a ordenar las ideas, dar claridad al texto y jerarquizar la información.</p>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Signo</th>
+                            <th>Uso principal</th>
+                            <th>Ejemplo correcto</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>.</strong> (Punto)</td>
+                            <td>Termina una idea completa.</td>
+                            <td>"Terminé mi tarea. Ahora puedo descansar."</td>
+                        </tr>
+                        <tr>
+                            <td><strong>,</strong> (Coma)</td>
+                            <td>Separa elementos o ideas.</td>
+                            <td>"Compré lápiz, cuaderno y borrador."</td>
+                        </tr>
+                        <tr>
+                            <td><strong>:</strong> (Dos puntos)</td>
+                            <td>Introduce una lista o explicación.</td>
+                            <td>"Necesito: tijeras, papel y pegamento."</td>
+                        </tr>
+                        <tr>
+                            <td><strong>;</strong> (Punto y coma)</td>
+                            <td>Separa ideas relacionadas.</td>
+                            <td>"Estudié mucho; aprobó el examen."</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <!-- Quiz Link -->
+            <section class="quiz-link">
+                <h2>Ponte a Prueba</h2>
+                <p>Verifica lo que aprendiste sobre la cohesión textual.</p>
+                <a href="#" onclick="startQuiz('tema10')" class="quiz-button">Realizar Quiz (5 Preguntas)</a>
+            </section>
+            
+            <a href="#" onclick="showPage('page-main')" class="nav-button back-button">Volver al Temario</a>
+        </main>
+    </div>
+    
+    
+    <!-- 
+      CONTENEDOR PÁGINA 10: QUIZ
+    -->
+    <div id="page-quiz" class="page-content">
+        <header>
+            <h1 id="quiz-title">Quiz de Español</h1>
+        </header>
+
+        <main>
+            <div class="quiz-container" id="quiz-container">
+                <div id="question-header">
+                    <h2 id="question-text">Cargando pregunta...</h2>
+                    <p id="question-counter"></p>
+                </div>
+                <ul id="options-container">
+                    <!-- Las opciones se generarán con JavaScript -->
+                </ul>
+                <button id="submit-btn">Siguiente</button>
             </div>
-            {submitted && (
-              <div className="mt-3 text-sm">
-                {(() => {
-                  const chosen = answers[qi];
-                  const correctText = q.options[q.answerIndex];
-                  const ok = chosen === q.answerIndex;
-                  return (
-                    <div>
-                      {ok ? (
-                        <div className="text-green-700">✔ Correcto</div>
-                      ) : (
-                        <div className="text-red-700">✘ Incorrecto. Respuesta correcta: <strong>{correctText}</strong>{q.explanation ? ` — ${q.explanation}` : ""}</div>
-                      )}
-                    </div>
-                  );
-                })()}
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
 
-      <div className="mt-6 flex items-center gap-3">
-        {!submitted ? (
-          <button onClick={handleSubmit} className="px-4 py-2 rounded-2xl bg-black text-white shadow hover:opacity-90">Enviar respuestas</button>
-        ) : (
-          <>
-            <div className="text-lg">Puntaje: <strong>{score}/{questions.length}</strong></div>
-            <button onClick={regenerate} className="px-4 py-2 rounded-2xl bg-gray-900 text-white shadow hover:opacity-90">Intentar otra versión</button>
-          </>
-        )}
-      </div>
+            <div class="results-container" id="results-container" style="display: none;">
+                <h2 id="results-title">Resultados</h2>
+                <p id="results-score">Obtuviste 0 de 0 correctas.</p>
+                <div id="incorrect-answers">
+                    <h3>Respuestas incorrectas:</h3>
+                    <!-- Aquí se listarán las preguntas falladas -->
+                </div>
+                <!-- Este botón ahora usa JavaScript para volver -->
+                <a href="#" onclick="showPage('page-main')" class="nav-button">Volver al inicio</a>
+            </div>
+        </main>
     </div>
-  );
-}
 
-// —— Páginas de Sección (resumen + botón al quiz de 5 preguntas) —— //
-function SectionPage({ sectionKey, onBack, onStartQuiz }: { sectionKey: SectionKey; onBack: () => void; onStartQuiz: () => void }) {
-  const { title, summary } = SectionSummaries[sectionKey];
-  return (
-    <div className="max-w-3xl mx-auto p-4">
-      <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-2xl font-semibold">{title}</h2>
-        <button onClick={onBack} className="px-3 py-1.5 rounded-xl bg-gray-100 hover:bg-gray-200 transition">← Regresar</button>
-      </div>
 
-      <div className="prose max-w-none mb-8">
-        {summary}
-      </div>
+    <!-- 
+      SCRIPT 1: BASE DE DATOS DE PREGUNTAS
+      Todo el contenido de 'quiz-data.js' está aquí.
+    -->
+    <script id="quiz-database">
+        const allQuestions = {
+            "tema1-2": {
+                "title": "Quiz: Textos Descriptivos, Expositivos y Argumentativos",
+                "questions": [
+                    {
+                        "question": "¿Cuál es el propósito principal de un texto expositivo?",
+                        "options": [
+                            "Persuadir al lector de una opinión.",
+                            "Informar de forma objetiva sobre un tema.",
+                            "Contar una historia con personajes.",
+                            "Describir un lugar con detalles."
+                        ],
+                        "answer": "Informar de forma objetiva sobre un tema."
+                    },
+                    {
+                        "question": "En un texto argumentativo, ¿cómo se le llama a la opinión o postura que defiende el autor?",
+                        "options": [
+                            "Argumento",
+                            "Dato",
+                            "Tesis",
+                            "Conclusión"
+                        ],
+                        "answer": "Tesis"
+                    },
+                    {
+                        "question": "¿Qué son las ideas secundarias en un texto?",
+                        "options": [
+                            "Son la columna vertebral del texto.",
+                            "Son la opinión personal del autor.",
+                            "Son los detalles que apoyan, explican o desarrollan la idea principal.",
+                            "Son la introducción y la conclusión."
+                        ],
+                        "answer": "Son los detalles que apoyan, explican o desarrollan la idea principal."
+                    },
+                    {
+                        "question": "¿Cuál es la diferencia entre información sustentada y opinión?",
+                        "options": [
+                            "La información sustentada son creencias y la opinión son datos.",
+                            "No hay diferencia, ambas son lo mismo.",
+                            "La información sustentada se basa en hechos verificables y datos, la opinión es un punto de vista personal.",
+                            "La información sustentada usa \"creo que\" y la opinión no."
+                        ],
+                        "answer": "La información sustentada se basa en hechos verificables y datos, la opinión es un punto de vista personal."
+                    },
+                    {
+                        "question": "¿Para qué sirven los conectores discursivos como 'sin embargo' o 'además'?",
+                        "options": [
+                            "Para decorar el texto visualmente.",
+                            "Para enlazar oraciones e ideas, dando cohesión y fluidez.",
+                            "Para presentar la tesis del autor.",
+                            "Para citar fuentes confiables."
+                        ],
+                        "answer": "Para enlazar oraciones e ideas, dando cohesión y fluidez."
+                    },
+                    {
+                        "question": "¿Qué recurso textual ofrece información de manera visual y ordenada para una comprensión rápida?",
+                        "options": [
+                            "Ejemplos y explicaciones",
+                            "Conectores discursivos",
+                            "Tablas e imágenes",
+                            "La idea principal"
+                        ],
+                        "answer": "Tablas e imágenes"
+                    },
+                    {
+                        "question": "Si se elimina la idea principal de un texto, ¿qué sucede?",
+                        "options": [
+                            "El texto se vuelve más corto.",
+                            "El texto pierde su sentido.",
+                            "El texto se convierte en argumentativo.",
+                            "No pasa nada, las ideas secundarias son suficientes."
+                        ],
+                        "answer": "El texto pierde su sentido."
+                    }
+                ]
+            },
+            "tema3": {
+                "title": "Quiz: Narración y Obra Dramática",
+                "questions": [
+                    {
+                        "question": "¿Cuál es la principal diferencia entre una narración y un drama?",
+                        "options": [
+                            "La narración usa verso y el drama usa prosa.",
+                            "La narración la cuenta un narrador y el drama se presenta con diálogos y acciones.",
+                            "La narración tiene inicio, nudo y desenlace, pero el drama no.",
+                            "La narración es para ser leída y el drama no puede ser leído."
+                        ],
+                        "answer": "La narración la cuenta un narrador y el drama se presenta con diálogos y acciones."
+                    },
+                    {
+                        "question": "En poesía, ¿qué es la métrica?",
+                        "options": [
+                            "La repetición de sonidos al final del verso.",
+                            "La medida de los versos (número de sílabas).",
+                            "El sentimiento que transmite el poema.",
+                            "Un verso que no tiene rima."
+                        ],
+                        "answer": "La medida de los versos (número de sílabas)."
+                    },
+                    {
+                        "question": "¿Qué característica principal tiene el verso libre?",
+                        "options": [
+                            "No está sujeto a métrica ni rima.",
+                            "Siempre debe tener 8 sílabas.",
+                            "Usa rima consonante estricta.",
+                            "Solo se usa en obras de teatro."
+                        ],
+                        "answer": "No está sujeto a métrica ni rima."
+                    },
+                    {
+                        "question": "¿Para qué sirve un monólogo en una obra dramática?",
+                        "options": [
+                            "Para que dos personajes discutan.",
+                            "Para describir el escenario.",
+                            "Para revelar los pensamientos y sentimientos íntimos de un solo personaje.",
+                            "Para que el narrador cuente la historia."
+                        ],
+                        "answer": "Para revelar los pensamientos y sentimientos íntimos de un solo personaje."
+                    },
+                    {
+                        "question": "¿Qué es la rima consonante?",
+                        "options": [
+                            "Cuando solo riman las vocales.",
+                            "Es la más estricta y genera musicalidad.",
+                            "Es lo mismo que el verso libre.",
+                            "Cuando no hay repetición de sonidos."
+                        ],
+                        "answer": "Es la más estricta y genera musicalidad."
+                    },
+                    {
+                        "question": "¿Cómo se desarrolla la trama en una obra dramática?",
+                        "options": [
+                            "A través de la voz de un narrador.",
+                            "Principalmente a través del diálogo y las acciones de los personajes.",
+                            "Usando métrica y rima.",
+                            "Mediante descripciones largas del ambiente."
+                        ],
+                        "answer": "Principalmente a través del diálogo y las acciones de los personajes."
+                    }
+                ]
+            },
+            "tema4": {
+                "title": "Quiz: Funciones Estéticas y Simbólicas",
+                "questions": [
+                    {
+                        "question": "¿Cuáles son las tres funciones principales de los recursos literarios?",
+                        "options": [
+                            "Informar, describir y narrar.",
+                            "Embellecer el texto, transmitir emociones y dar más significado.",
+                            "Usar métrica, rima y verso libre.",
+                            "Escribir diálogos, monólogos y acotaciones."
+                        ],
+                        "answer": "Embellecer el texto, transmitir emociones y dar más significado."
+                    },
+                    {
+                        "question": "La frase 'Tus ojos son dos luceros' es un ejemplo de función...",
+                        "options": [
+                            "Simbólica",
+                            "Narrativa",
+                            "Estética (embellecimiento)",
+                            "Argumentativa"
+                        ],
+                        "answer": "Estética (embellecimiento)"
+                    },
+                    {
+                        "question": "Si en un texto una paloma representa la paz, ¿qué función está cumpliendo?",
+                        "options": [
+                            "Función Estética",
+                            "Función Simbólica",
+                            "Función Métrica",
+                            "Función de Acotación"
+                        ],
+                        "answer": "Función Simbólica"
+                    },
+                    {
+                        "question": "¿Qué es una metáfora?",
+                        "options": [
+                            "Una instrucción para un actor.",
+                            "Una idea que se repite mucho en un cuento.",
+                            "Una comparación sin usar la palabra 'como'.",
+                            "Un discurso de un solo personaje."
+                        ],
+                        "answer": "Una comparación sin usar la palabra 'como'."
+                    },
+                    {
+                        "question": "En una obra de teatro, ¿cómo se llaman las instrucciones que indican cómo deben actuar los personajes (ej. 'grita con enojo')?",
+                        "options": [
+                            "Diálogos",
+                            "Motivos",
+                            "Símbolos",
+                            "Acotaciones"
+                        ],
+                        "answer": "Acotaciones"
+                    },
+                    {
+                        "question": "En un cuento, si un reloj aparece cada vez que el personaje está apurado, ese reloj se convierte en un...",
+                        "options": [
+                            "Tema",
+                            "Motivo",
+                            "Metáfora",
+                            "Personaje"
+                        ],
+                        "answer": "Motivo"
+                    },
+                    {
+                        "question": "¿Qué es el 'tema' en un texto narrativo?",
+                        "options": [
+                            "La idea principal o central, como la amistad, la justicia o el miedo.",
+                            "Las instrucciones para los actores.",
+                            "El número de sílabas de un verso.",
+                            "La opinión del autor."
+                        ],
+                        "answer": "La idea principal o central, como la amistad, la justicia o el miedo."
+                    }
+                ]
+            },
+            "tema5": {
+                "title": "Quiz: Temas Literarios y Adaptaciones",
+                "questions": [
+                    {
+                        "question": "¿Qué es una 'adaptación' en el contexto artístico?",
+                        "options": [
+                            "Es escribir una obra de teatro.",
+                            "Es el proceso de trasladar una obra literaria a otro medio artístico (como el cine).",
+                            "Es usar metáforas y símbolos.",
+                            "Es la opinión del autor."
+                        ],
+                        "answer": "Es el proceso de trasladar una obra literaria a otro medio artístico (como el cine)."
+                    },
+                    {
+                        "question": "¿Cuál es una diferencia clave entre cómo una novela y una película (cine) representan un tema?",
+                        "options": [
+                            "La novela usa actores y la película usa un narrador.",
+                            "La novela es siempre más corta que la película.",
+                            "La novela profundiza con detalles internos y el cine lo hace de forma visual y sensorial.",
+                            "La novela no tiene estructura y la película sí."
+                        ],
+                        "answer": "La novela profundiza con detalles internos y el cine lo hace de forma visual y sensorial."
+                    },
+                    {
+                        "question": "La estructura de una obra teatral se basa en...",
+                        "options": [
+                            "Capítulos y párrafos.",
+                            "Métrica y rima.",
+                            "Actos y escenas.",
+                            "Montaje y flashbacks."
+                        ],
+                        "answer": "Actos y escenas."
+                    },
+                    {
+                        "question": "¿Qué recurso, propio del cine, permite jugar con el tiempo y el espacio, a diferencia del teatro?",
+                        "options": [
+                            "Diálogo",
+                            "Monólogo",
+                            "Flashback o montaje",
+                            "Acotaciones"
+                        ],
+                        "answer": "Flashback o montaje"
+                    },
+                    {
+                        "question": "¿Cómo es la representación de un personaje en una pintura (arte visual) comparada con una novela?",
+                        "options": [
+                            "La pintura es dinámica y la novela es estática.",
+                            "La pintura es estática y subjetiva, la novela usa descripción detallada.",
+                            "La pintura siempre cuenta toda la historia.",
+                            "La novela no puede describir la apariencia física."
+                        ],
+                        "answer": "La pintura es estática y subjetiva, la novela usa descripción detallada."
+                    },
+                    {
+                        "question": "Al adaptar una novela al cine, ¿qué suele pasar con la historia?",
+                        "options": [
+                            "Se debe alargar para que dure más tiempo.",
+                            "Se debe reducir o resumir para un tiempo limitado.",
+                            "Se debe convertir en una obra de teatro.",
+                            "Se debe eliminar a todos los personajes."
+                        ],
+                        "answer": "Se debe reducir o resumir para un tiempo limitado."
+                    }
+                ]
+            },
+            "tema6-7": {
+                "title": "Quiz: Documentos Legales y Administrativos",
+                "questions": [
+                    {
+                        "question": "¿Qué es un contrato?",
+                        "options": [
+                            "Una opinión personal sobre un tema.",
+                            "Un texto que describe un lugar.",
+                            "Un acuerdo legal entre dos o más partes que crea obligaciones.",
+                            "Una historia narrada en prosa."
+                        ],
+                        "answer": "Un acuerdo legal entre dos o más partes que crea obligaciones."
+                    },
+                    {
+                        "question": "En un contrato, ¿cómo se llaman los términos y condiciones específicos que definen derechos y deberes?",
+                        "options": [
+                            "Firmas",
+                            "Cláusulas",
+                            "Opiniones",
+                            "Proemio"
+                        ],
+                        "answer": "Cláusulas"
+                    },
+                    {
+                        "question": "¿Cuál es el propósito de las firmas en un contrato?",
+                        "options": [
+                            "Decorar el documento.",
+                            "Validar que las partes están de acuerdo y aceptan las obligaciones.",
+                            "Resumir la historia.",
+                            "Presentar a los personajes."
+                        ],
+                        "answer": "Validar que las partes están de acuerdo y aceptan las obligaciones."
+                    },
+                    {
+                        "question": "¿Qué son las 'obligaciones' en un acuerdo legal?",
+                        "options": [
+                            "Los puntos de vista personales.",
+                            "Las acciones concretas y compromisos que cada parte debe cumplir.",
+                            "Los datos para identificar a las partes.",
+                            "El vocabulario técnico."
+                        ],
+                        "answer": "Las acciones concretas y compromisos que cada parte debe cumplir."
+                    },
+                    {
+                        "question": "¿Por qué es fundamental la claridad y precisión en la redacción de un documento legal?",
+                        "options": [
+                            "Para hacerlo más largo y complejo.",
+                            "Para usar palabras bonitas.",
+                            "Para evitar malentendidos y prevenir conflictos futuros.",
+                            "Para que se pueda adaptar al cine."
+                        ],
+                        "answer": "Para evitar malentendidos y prevenir conflictos futuros."
+                    },
+                    {
+                        "question": "En la estructura de un contrato, ¿cómo se llama la parte con los datos esenciales para identificar el asunto?",
+                        "options": [
+                            "Cláusula",
+                            "Firma",
+                            "Proemio",
+                            "Obligación"
+                        ],
+                        "answer": "Proemio"
+                    }
+                ]
+            },
+            "tema8": {
+                "title": "Quiz: Artículo de Opinión y Debate",
+                "questions": [
+                    {
+                        "question": "¿Qué es un artículo de opinión?",
+                        "options": [
+                            "Un texto que informa objetivamente.",
+                            "Un texto que describe a una persona.",
+                            "Un texto argumentativo donde el autor expresa su punto de vista.",
+                            "Un texto que da instrucciones."
+                        ],
+                        "answer": "Un texto argumentativo donde el autor expresa su punto de vista."
+                    },
+                    {
+                        "question": "El conector 'por lo tanto' se usa para...",
+                        "options": [
+                            "Indicar una contradicción u oposición.",
+                            "Agregar más información.",
+                            "Indicar el resultado o efecto de una acción.",
+                            "Ordenar la información."
+                        ],
+                        "answer": "Indicar el resultado o efecto de una acción."
+                    },
+                    {
+                        "question": "El conector 'sin embargo' se usa para...",
+                        "options": [
+                            "Señalar una contradicción o diferencia entre dos ideas.",
+                            "Indicar una consecuencia.",
+                            "Dar un ejemplo.",
+                            "Empezar el texto."
+                        ],
+                        "answer": "Señalar una contradicción o diferencia entre dos ideas."
+                    },
+                    {
+                        "question": "¿Qué es el 'vocabulario técnico'?",
+                        "options": [
+                            "Palabras que se usan en la conversación cotidiana.",
+                            "Palabras y expresiones específicas de un área de conocimiento.",
+                            "Palabras que no tienen un significado preciso.",
+                            "Palabras que solo se usan en poemas."
+                        ],
+                        "answer": "Palabras y expresiones específicas de un área de conocimiento."
+                    },
+                    {
+                        "question": "¿Qué es un debate?",
+                        "options": [
+                            "Una presentación de un proyecto en equipo.",
+                            "Un texto que resume un libro.",
+                            "Una discusión formal entre personas que defienden posturas opuestas.",
+                            "Un discurso de un solo personaje."
+                        ],
+                        "answer": "Una discusión formal entre personas que defienden posturas opuestas."
+                    },
+                    {
+                        "question": "¿Quién es el 'moderador' en un debate?",
+                        "options": [
+                            "El que defiende la postura a favor.",
+                            "El que defiende la postura en contra.",
+                            "La persona que dirige el debate, da la palabra y mantiene el orden.",
+                            "El público que hace preguntas."
+                        ],
+                        "answer": "La persona que dirige el debate, da la palabra y mantiene el orden."
+                    },
+                    {
+                        "question": "¿Qué es una reseña de un libro?",
+                        "options": [
+                            "Es un texto que resume, analiza y valora una obra literaria.",
+                            "Es el contrato para comprar un libro.",
+                            "Es la lista de personajes del libro.",
+                            "Es el guion para adaptar el libro al cine."
+                        ],
+                        "answer": "Es un texto que resume, analiza y valora una obra literaria."
+                    }
+                ]
+            },
+            "tema9": {
+                "title": "Quiz: Reglas de Sintaxis y Morfología",
+                "questions": [
+                    {
+                        "question": "¿Qué estudia la sintaxis?",
+                        "options": [
+                            "La estructura y forma de las palabras.",
+                            "El orden y la relación de las palabras en una oración.",
+                            "Los sentimientos en un poema.",
+                            "Las reglas de los contratos."
+                        ],
+                        "answer": "El orden y la relación de las palabras en una oración."
+                    },
+                    {
+                        "question": "¿Qué estudia la morfología?",
+                        "options": [
+                            "La estructura y forma de las palabras (cómo se forman y cambian).",
+                            "El orden correcto de las oraciones.",
+                            "El significado de los textos.",
+                            "Los conectores de contraste."
+                        ],
+                        "answer": "La estructura y forma de las palabras (cómo se forman y cambian)."
+                    },
+                    {
+                        "question": "En la palabra 'niños', el segmento '-o' indica...",
+                        "options": [
+                            "La raíz (significado)",
+                            "Género masculino",
+                            "Número plural",
+                            "Que es un verbo"
+                        ],
+                        "answer": "Género masculino"
+                    },
+                    {
+                        "question": "En la palabra 'niños', el segmento '-s' indica...",
+                        "options": [
+                            "Género masculino",
+                            "Que es un sustantivo",
+                            "La raíz",
+                            "Número plural"
+                        ],
+                        "answer": "Número plural"
+                    },
+                    {
+                        "question": "¿Para qué sirven los términos técnicos en un texto?",
+                        "options": [
+                            "Para hacer el texto más vago y general.",
+                            "Para dar precisión y formalidad a lo que escribes.",
+                            "Para confundir al lector.",
+                            "Para crear metáforas."
+                        ],
+                        "answer": "Para dar precisión y formalidad a lo que escribes."
+                    },
+                    {
+                        "question": "¿Qué es la concordancia verbal?",
+                        "options": [
+                            "Usar muchos verbos en una oración.",
+                            "Que el sujeto y el verbo coincidan en número (singular/plural) y persona.",
+                            "Escribir todos los verbos en pasado.",
+                            "La relación entre la sintaxis y la morfología."
+                        ],
+                        "answer": "Que el sujeto y el verbo coincidan en número (singular/plural) y persona."
+                    }
+                ]
+            },
+            "tema10": {
+                "title": "Quiz: Cohesión en Textos",
+                "questions": [
+                    {
+                        "question": "¿Qué son los conectores discursivos?",
+                        "options": [
+                            "Las ideas principales de un texto.",
+                            "Los signos de puntuación.",
+                            "Palabras o frases que unen ideas y ayudan a la coherencia.",
+                            "Las reglas de sintaxis."
+                        ],
+                        "answer": "Palabras o frases que unen ideas y ayudan a la coherencia."
+                    },
+                    {
+                        "question": "¿Qué función tiene el conector 'Sin embargo'?",
+                        "options": [
+                            "Agregar información",
+                            "Indicar una consecuencia",
+                            "Contrastar una idea",
+                            "Dar un ejemplo"
+                        ],
+                        "answer": "Contrastar una idea"
+                    },
+                    {
+                        "question": "¿Qué función tiene el conector 'Además'?",
+                        "options": [
+                            "Agregar información",
+                            "Contrastar una idea",
+                            "Indicar una causa",
+                            "Terminar el texto"
+                        ],
+                        "answer": "Agregar información"
+                    },
+                    {
+                        "question": "¿Para qué sirven los signos de puntuación como el punto, la coma y el punto y coma?",
+                        "options": [
+                            "Para que el texto se vea más bonito.",
+                            "Para cambiar el significado de las palabras.",
+                            "Para ordenar las ideas, dar claridad y jerarquizar la información.",
+                            "Para unir oraciones (esa es la función de los conectores)."
+                        ],
+                        "answer": "Para ordenar las ideas, dar claridad y jerarquizar la información."
+                    },
+                    {
+                        "question": "¿Qué signo se usa para introducir una lista o una explicación? (Ej: Necesito:...)",
+                        "options": [
+                            "Coma (,)",
+                            "Punto y coma (;)",
+                            "Punto (.)",
+                            "Dos puntos (:)"
+                        ],
+                        "answer": "Dos puntos (:)"
+                    },
+                    {
+                        "question": "¿Qué signo se usa para separar ideas relacionadas, pero que son más independientes que las separadas por comas? (Ej: Estudié mucho; aprobé el examen.)",
+                        "options": [
+                            "Coma (,)",
+                            "Punto y coma (;)",
+                            "Dos puntos (:)",
+                            "Punto (.)"
+                        ],
+                        "answer": "Punto y coma (;)"
+                    }
+                ]
+            }
+        };
 
-      <div className="mt-8 border-t pt-6">
-        <button onClick={onStartQuiz} className="px-4 py-2 rounded-2xl bg-black text-white shadow hover:opacity-90">
-          Hacer quiz de esta sección (5 preguntas)
-        </button>
-      </div>
-    </div>
-  );
-}
+        // --- Creación del Quiz General ---
+        allQuestions.general = {
+            "title": "Quiz General de Español",
+            "questions": [
+                ...allQuestions["tema1-2"].questions,
+                ...allQuestions["tema3"].questions,
+                ...allQuestions["tema4"].questions,
+                ...allQuestions["tema5"].questions,
+                ...allQuestions["tema6-7"].questions,
+                ...allQuestions["tema8"].questions,
+                ...allQuestions["tema9"].questions,
+                ...allQuestions["tema10"].questions
+            ]
+        };
+    </script>
 
-// —— Página principal —— //
-export default function App() {
-  const [page, setPage] = useState<Page>({ type: "home" });
-  const [activeSection, setActiveSection] = useState<SectionKey | null>(null);
+    <!-- 
+      SCRIPT 2: LÓGICA PRINCIPAL
+      Todo el contenido de 'script.js' está aquí, 
+      más la lógica para navegar entre "páginas".
+    -->
+    <script id="main-logic">
+        
+        // --- Sistema de Navegación de Páginas ---
+        function showPage(pageId) {
+            // Oculta todas las secciones de contenido
+            document.querySelectorAll('.page-content').forEach(page => {
+                page.style.display = 'none';
+            });
 
-  const goHome = () => setPage({ type: "home" });
+            // Muestra la página solicitada
+            const targetPage = document.getElementById(pageId);
+            if (targetPage) {
+                targetPage.style.display = 'block';
+                window.scrollTo(0, 0); // Sube al inicio de la página
+            } else {
+                console.error('Error: Página no encontrada', pageId);
+                document.getElementById('page-main').style.display = 'block'; // Mostrar inicio como fallback
+            }
+        }
 
-  // Render condicional segun página
-  if (page.type === "section" && activeSection) {
-    const bank = sectionBanks[activeSection];
-    const title = `Quiz – ${SectionSummaries[activeSection].title}`;
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-white to-gray-50">
-        <SectionPage
-          sectionKey={activeSection}
-          onBack={goHome}
-          onStartQuiz={() => setPage({ type: "section" })}
-        />
-        {/* Si el usuario presiona el botón, mostramos el quiz inmediatamente debajo */}
-        <div className="pb-16">
-          <Quiz bank={bank} numQuestions={5} title={title} onBack={goHome} />
-        </div>
-      </div>
-    );
-  }
+        // --- Lógica del Quiz ---
 
-  if (page.type === "generalQuiz") {
-    // Banco general: todas las preguntas
-    const fullBank = [
-      ...bank1,
-      ...bank2,
-      ...bank3,
-      ...bank4,
-      ...bank5,
-      ...bank6,
-      ...bank7,
-      ...bank8,
-    ];
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-white to-gray-50">
-        <Quiz bank={fullBank} numQuestions={20} title="Quiz General (20 preguntas)" onBack={goHome} />
-      </div>
-    );
-  }
+        // Variables globales para el estado del quiz
+        let currentQuestions = [];
+        let currentQuestionIndex = 0;
+        let userAnswers = [];
+        let score = 0;
+        let totalQuestions = 0;
 
-  // Página de inicio
-  return (
-    <div className="min-h-screen bg-gradient-to-b from-white to-gray-50">
-      <header className="px-6 pt-10 pb-6 text-center">
-        <h1 className="text-4xl font-bold tracking-tight">Guía de Estudio Español</h1>
-        <p className="mt-2 text-gray-600">Resumen general, secciones con apuntes claros y quizzes auto-generados.</p>
-      </header>
+        // Referencias a elementos del DOM del Quiz
+        // (Se definen aquí una vez para no buscarlos repetidamente)
+        const quizContainer = document.getElementById('quiz-container');
+        const resultsContainer = document.getElementById('results-container');
+        const quizTitle = document.getElementById('quiz-title');
+        const questionText = document.getElementById('question-text');
+        const questionCounter = document.getElementById('question-counter');
+        const optionsContainer = document.getElementById('options-container');
+        const submitBtn = document.getElementById('submit-btn');
+        const resultsScore = document.getElementById('results-score');
+        const incorrectAnswersList = document.getElementById('incorrect-answers');
 
-      <main className="max-w-4xl mx-auto p-4">
-        {/* Ventana de video */}
-        <div className="rounded-2xl overflow-hidden shadow border bg-black aspect-video mb-8">
-          <video controls src={VIDEO_URL} className="w-full h-full" />
-        </div>
+        /**
+         * Función para iniciar un nuevo quiz.
+         * Es llamada por los botones "Realizar Quiz".
+         */
+        function startQuiz(quizId) {
+            // 1. Reiniciar el estado visual del quiz
+            resultsContainer.style.display = 'none';
+            quizContainer.style.display = 'block';
+            
+            // 2. Limpiar la lista de respuestas incorrectas de la vez anterior
+            // (Importante para quizzes subsecuentes)
+            const incorrectListContent = document.querySelector('#incorrect-answers ul');
+            if (incorrectListContent) {
+                incorrectListContent.remove();
+            }
 
-        {/* Botones de secciones */}
-        <div className="grid sm:grid-cols-2 gap-4 mb-8">
-          {(() => {
-            const menu: { key: SectionKey; label: string }[] = [
-              { key: "seccion1", label: "TEMA 1 Y 2. TEXTOS DESCRIPTIVOS, EXPOSITIVOS Y ARGUMENTATIVOS." },
-              { key: "seccion2", label: "TEMA 3. ESTRUCTURA DE UNA NARRACIÓN Y UNA OBRA DRAMÁTICA." },
-              { key: "seccion3", label: "TEMA 4. FUNCIONES ESTÉTICAS Y SIMBÓLICAS." },
-              { key: "seccion4", label: "TEMA 5. TEMAS LITERARIOS EN TEXTOS NARRATIVOS, LÍRICOS Y DRAMÁTICOS." },
-              { key: "seccion5", label: "TEMA 6 Y 7. ELEMENTOS BÁSICOS DE DOCUMENTOS LEGALES Y ADMINISTRATIVOS SENCILLOS." },
-              { key: "seccion6", label: "TEMA 8. ARTÍCULO DE OPINIÓN" },
-              { key: "seccion7", label: "TEMA 9. REGLAS DE SINTAXIS Y MORFOLOGÍA." },
-              { key: "seccion8", label: "TEMA 10. COHESIÓN EN TEXTOS" },
-            ];
-            return menu.map(({ key, label }, idx) => (
-              <button
-                key={key}
-                onClick={() => { setActiveSection(key); setPage({ type: "section", key }); }}
-                className="text-left p-4 rounded-2xl border shadow hover:shadow-md hover:-translate-y-0.5 transition"
-              >
-                <div className="text-sm text-gray-500">Sección {idx + 1}</div>
-                <div className="text-lg font-semibold">{label}</div>
-                <div className="mt-1 text-gray-600 line-clamp-2">Accede al resumen y practica con un quiz de 5 preguntas.</div>
-              </button>
-            ));
-          })()}
-        </div>
+            // 3. Mostrar la "página" del quiz
+            showPage('page-quiz');
+            
+            // 4. Cargar la lógica y datos del quiz
+            loadQuizLogic(quizId);
+        }
 
-        {/* Link al Quiz General */}
-        <div className="text-center mb-16">
-          <button
-            onClick={() => setPage({ type: "generalQuiz" })}
-            className="px-6 py-3 rounded-2xl bg-black text-white font-medium shadow hover:opacity-90"
-          >
-            Hacer Quiz General (20 preguntas)
-          </button>
-          <p className="text-sm text-gray-600 mt-2">Cada intento genera una versión diferente.</p>
-        </div>
-      </main>
+        /**
+         * Carga los datos del quiz, mezcla preguntas y muestra la primera.
+         */
+        function loadQuizLogic(quizId) {
+            if (!quizId || !allQuestions[quizId]) {
+                quizTitle.textContent = "Error";
+                questionText.textContent = "No se encontró el quiz solicitado. Por favor, vuelve al inicio.";
+                submitBtn.style.display = 'none';
+                return;
+            }
+            
+            submitBtn.style.display = 'block'; // Asegurarse que el botón sea visible
+            const quizData = allQuestions[quizId];
+            quizTitle.textContent = quizData.title;
+            
+            // Copia y mezcla las preguntas
+            let questionsToLoad = shuffleArray([...quizData.questions]); 
+            
+            // Define cuántas preguntas usar
+            if (quizId === 'general') {
+                totalQuestions = 20;
+                currentQuestions = questionsToLoad.slice(0, 20);
+            } else {
+                totalQuestions = 5;
+                currentQuestions = questionsToLoad.slice(0, 5);
+            }
 
-      <footer className="text-center text-xs text-gray-500 pb-8">
-        "Pluto el que lo lea"
-      </footer>
-    </div>
-  );
-}
+            // Resetea contadores y respuestas
+            userAnswers = new Array(totalQuestions).fill(null);
+            currentQuestionIndex = 0;
+            score = 0;
+
+            // Muestra la primera pregunta
+            showQuestion();
+        }
+
+        /**
+         * Muestra la pregunta actual y sus opciones (mezcladas).
+         */
+        function showQuestion() {
+            deselectOptions(); // Limpia la selección anterior
+
+            const questionData = currentQuestions[currentQuestionIndex];
+            
+            // Mezcla las opciones de esta pregunta
+            let shuffledOptions = shuffleArray([...questionData.options]);
+            
+            questionText.textContent = questionData.question;
+            questionCounter.textContent = `Pregunta ${currentQuestionIndex + 1} de ${totalQuestions}`;
+            optionsContainer.innerHTML = ''; // Limpia opciones anteriores
+
+            // Crea los <li> para cada opción
+            shuffledOptions.forEach(option => {
+                const li = document.createElement('li');
+                li.textContent = option;
+                // Guarda la respuesta seleccionada al hacer clic
+                li.addEventListener('click', () => selectOption(li, option));
+                optionsContainer.appendChild(li);
+            });
+
+            // Cambia el texto del botón si es la última pregunta
+            if (currentQuestionIndex === totalQuestions - 1) {
+                submitBtn.textContent = 'Finalizar Quiz';
+            } else {
+                submitBtn.textContent = 'Siguiente';
+            }
+        }
+
+        /**
+         * Guarda la respuesta del usuario y marca la opción como 'seleccionada'.
+         */
+        function selectOption(selectedLi, option) {
+            deselectOptions(); // Quita 'selected' de otras opciones
+            selectedLi.classList.add('selected');
+            userAnswers[currentQuestionIndex] = option; // Guarda la respuesta
+        }
+
+        /**
+         * Quita la clase 'selected' de todos los <li> de opciones.
+         */
+        function deselectOptions() {
+            const options = optionsContainer.getElementsByTagName('li');
+            Array.from(options).forEach(option => {
+                option.classList.remove('selected');
+            });
+        }
+
+        /**
+         * Muestra la pantalla de resultados finales.
+         */
+        function showResults() {
+            quizContainer.style.display = 'none';
+            resultsContainer.style.display = 'block';
+
+            resultsScore.textContent = `Obtuviste ${score} de ${totalQuestions} correctas.`;
+
+            let incorrectHtml = '<ul>';
+            let hasIncorrectAnswers = false;
+            
+            currentQuestions.forEach((question, index) => {
+                if (userAnswers[index] !== question.answer) {
+                    hasIncorrectAnswers = true;
+                    incorrectHtml += `
+                        <li>
+                            <p class="question">${index + 1}. ${question.question}</p>
+                            <p class="user-answer"><strong>Tu respuesta:</strong> ${userAnswers[index] || "No contestada"}</p>
+                            <p class="correct-answer"><strong>Respuesta correcta:</strong> ${question.answer}</p>
+                        </li>
+                    `;
+                }
+            });
+            incorrectHtml += '</ul>';
+
+            if (!hasIncorrectAnswers) {
+                // Mensaje si todo es correcto
+                const h3 = incorrectAnswersList.querySelector('h3');
+                if (h3) h3.innerHTML = '<h3>¡Felicidades! ¡Todas tus respuestas son correctas!</h3>';
+            } else {
+                // Muestra la lista de respuestas incorrectas
+                const h3 = incorrectAnswersList.querySelector('h3');
+                if (h3) h3.innerHTML = '<h3>Respuestas incorrectas:</h3>';
+                incorrectAnswersList.innerHTML += incorrectHtml;
+            }
+        }
+
+        /**
+         * Función para mezclar un array (Algoritmo Fisher-Yates).
+         */
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        // --- INICIALIZACIÓN DE LA PÁGINA ---
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            
+            // 1. Mostrar la página principal al cargar
+            showPage('page-main');
+            
+            // 2. Configurar el botón "Siguiente" del quiz UNA SOLA VEZ
+            submitBtn.addEventListener('click', () => {
+                const selectedOption = userAnswers[currentQuestionIndex];
+                
+                // Evita avanzar sin seleccionar
+                if (selectedOption === null && currentQuestionIndex < totalQuestions) {
+                    // No usamos alert()
+                    console.warn('Selecciona una respuesta'); 
+                    // Podríamos añadir un mensaje visual aquí
+                    return; 
+                }
+
+                // Revisa la respuesta (si no se ha contestado, se califica como incorrecta)
+                if (selectedOption === currentQuestions[currentQuestionIndex].answer) {
+                    score++;
+                }
+
+                currentQuestionIndex++; // Avanza a la siguiente pregunta
+
+                // Decide si mostrar otra pregunta o los resultados
+                if (currentQuestionIndex < totalQuestions) {
+                    showQuestion();
+                } else {
+                    showResults();
+                }
+            });
+        });
+
+    </script>
+</body>
+</html>
