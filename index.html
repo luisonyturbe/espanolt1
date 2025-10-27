@@ -4,61 +4,77 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Guía de Estudio Español</title>
-    
     <!-- 
-      CSS (Estilos)
-      Todo el contenido de 'style.css' está ahora aquí adentro.
+        CSS (Estilos) está integrado en este mismo archivo.
+        No se necesita un archivo .css separado.
     -->
     <style>
         /* Estilos Generales */
+        :root {
+            --color-primario: #005a9c; /* Azul académico */
+            --color-primario-oscuro: #003b6f;
+            --color-acento: #fdb813; /* Detalle en dorado */
+            --color-fondo: #f4f7f6;
+            --color-tarjeta: #ffffff;
+            --color-texto: #333;
+            --color-quiz-verde: #28a745;
+            --color-quiz-rojo: #d9534f;
+        }
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             line-height: 1.6;
-            background-color: #f4f7f6;
-            color: #333;
+            background-color: var(--color-fondo);
+            color: var(--color-texto);
             margin: 0;
             padding: 0;
         }
 
+        /* Ocultar todas las páginas por defecto */
+        .page {
+            display: none;
+        }
+        /* Mostrar solo la página activa */
+        .page.active {
+            display: block;
+        }
+
         header {
-            background-color: #005a9c; /* Azul académico */
+            background-color: var(--color-primario);
             color: #ffffff;
             padding: 20px 40px;
             text-align: center;
-            border-bottom: 4px solid #fdb813; /* Detalle en dorado */
+            border-bottom: 4px solid var(--color-acento);
         }
 
         header h1 {
             margin: 0;
-            font-size: 2.2em; /* Ajustado para móviles */
+            font-size: 2.5em;
         }
 
         main {
             max-width: 900px;
             margin: 20px auto;
             padding: 20px;
-            background-color: #ffffff;
+            background-color: var(--color-tarjeta);
             border-radius: 8px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-            /* Importante: overflow: hidden para que los márgenes de los hijos no colapsen */
-            overflow: hidden; 
         }
 
         footer {
             text-align: center;
             margin-top: 20px;
-            padding: 0 20px 20px;
             font-size: 0.9em;
             color: #777;
         }
 
         h1, h2, h3 {
-            color: #003b6f; /* Azul más oscuro */
+            color: var(--color-primario-oscuro);
             margin-bottom: 0.5em;
         }
 
         h2 { border-bottom: 2px solid #eee; padding-bottom: 5px; }
-        h3 { color: #005a9c; }
+        h3 { color: var(--color-primario); }
 
         p { margin-bottom: 1em; }
         ul, ol { margin-bottom: 1em; padding-left: 20px; }
@@ -79,7 +95,7 @@
 
         table th {
             background-color: #e9f1f7;
-            color: #003b6f;
+            color: var(--color-primario-oscuro);
             font-weight: bold;
         }
 
@@ -92,43 +108,51 @@
             padding-bottom: 20px;
             border-bottom: 1px solid #ddd;
         }
-        
         .content-section:last-of-type {
             border-bottom: none;
-            margin-bottom: 0;
         }
 
-        /* Página Principal (index.html) */
-        .video-container {
-            position: relative;
-            padding-bottom: 56.25%; /* 16:9 Aspect Ratio */
-            height: 0;
-            overflow: hidden;
-            max-width: 100%;
-            background: #f0f0f0; 
-            border-radius: 8px;
+        /* --- Estilos de Navegación y Video --- */
+        .video-wrapper {
+            text-align: center;
             margin-bottom: 30px;
         }
+        
+        /* Contenedor responsivo para video/iframe */
+        .video-container {
+            position: relative;
+            width: 100%;
+            padding-bottom: 56.25%; /* Proporción 16:9 */
+            height: 0;
+            background-color: #000;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid #ddd;
+        }
 
-        .video-container iframe,
-        .video-container video {
+        .video-container video,
+        .video-container iframe {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            border: 0; /* Quitar borde del iframe */
+            border: 0;
         }
-        
+
         .video-placeholder-text {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
             position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            color: #003b6f;
-            font-weight: 500;
-            text-align: center;
+            top: 0;
+            left: 0;
+            width: 100%;
+            color: #999;
+            font-size: 1.1em;
             padding: 20px;
+            box-sizing: border-box;
         }
 
         .main-nav {
@@ -140,7 +164,7 @@
 
         .nav-button {
             display: block;
-            background-color: #005a9c;
+            background-color: var(--color-primario);
             color: #ffffff;
             text-decoration: none;
             padding: 15px 20px;
@@ -149,11 +173,12 @@
             font-size: 1.1em;
             font-weight: 500;
             transition: background-color 0.3s ease, transform 0.2s ease;
-            cursor: pointer; /* Para que parezca clickeable */
+            cursor: pointer;
+            border: none;
         }
 
         .nav-button:hover {
-            background-color: #003b6f;
+            background-color: var(--color-primario-oscuro);
             transform: translateY(-2px);
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
@@ -167,7 +192,7 @@
 
         .quiz-button {
             display: inline-block;
-            background-color: #28a745; /* Verde */
+            background-color: var(--color-quiz-verde);
             color: #ffffff;
             text-decoration: none;
             padding: 12px 25px;
@@ -175,11 +200,12 @@
             font-size: 1.2em;
             font-weight: bold;
             transition: background-color 0.3s ease;
-            cursor: pointer; /* Para que parezca clickeable */
+            cursor: pointer;
+            border: none;
         }
 
         .quiz-button.general {
-            background-color: #d9534f; /* Rojo */
+            background-color: var(--color-quiz-rojo);
         }
 
         .quiz-button:hover {
@@ -198,7 +224,7 @@
             background-color: #5a6268;
         }
 
-        /* Página de Quiz (quiz.html) */
+        /* --- Estilos del Quiz --- */
         .quiz-container {
             padding: 20px;
         }
@@ -241,7 +267,7 @@
 
         #options-container li.selected {
             background-color: #d4e6f1;
-            border-color: #005a9c;
+            border-color: var(--color-primario);
             font-weight: bold;
         }
 
@@ -271,13 +297,13 @@
         #results-score {
             font-size: 1.8em;
             font-weight: bold;
-            color: #003b6f;
+            color: var(--color-primario-oscuro);
             text-align: center;
             margin-bottom: 30px;
         }
 
         #incorrect-answers h3 {
-            color: #d9534f; /* Rojo */
+            color: var(--color-quiz-rojo);
             border-bottom: 2px solid #f5c6cb;
             padding-bottom: 5px;
         }
@@ -301,84 +327,85 @@
         }
 
         #incorrect-answers .user-answer {
-            color: #d9534f;
+            color: var(--color-quiz-rojo);
         }
 
         #incorrect-answers .correct-answer {
-            color: #28a745;
+            color: var(--color-quiz-verde);
             font-weight: 500;
         }
-        
-        /* Sistema de "Páginas"
-          Oculta todas las secciones de contenido por defecto.
-          JavaScript mostrará la que corresponda.
-        */
-        .page-content {
-            display: none;
-        }
-
     </style>
 </head>
 <body>
 
     <!-- 
-      CONTENEDOR PÁGINA 1: PRINCIPAL
+        CONTENEDOR DE PÁGINAS
+        Aquí están todas las "páginas" (secciones).
+        El JavaScript se encarga de mostrar solo la activa.
     -->
-    <div id="page-main" class="page-content">
+
+    <!-- ========== PÁGINA PRINCIPAL (index.html) ========== -->
+    <div id="page-main" class="page active">
         <header>
             <h1>Guía de Estudio Español</h1>
         </header>
         
         <main>
-            <section> <!-- Contenedor de la sección del video -->
+            <section class="video-wrapper">
                 <h2>Resumen General</h2>
+                
                 <!-- 
-                    ACTUALIZACIÓN IMPORTANTE:
-                    GitHub no es un servicio de streaming de video, por eso no funcionaba.
-                    La mejor solución es subir el video a YouTube.
+                    *****************************************************
+                    AQUÍ ESTÁ LA CORRECCIÓN / EL "TRUCO" PARA EL VIDEO
+                    *****************************************************
                     
-                    INSTRUCCIONES:
-                    1. Sube tu video (el .mov está bien) a YouTube.
-                    2. Ponlo como "No listado" (Unlisted) si no quieres que sea público.
-                    3. Haz clic en "Compartir" > "Insertar" (Embed).
-                    4. Copia el código <iframe ...> que te da YouTube.
-                    5. Pega ese código <iframe ...> REEMPLAZANDO el <p> de placeholder de abajo.
+                    He aplicado el truco de 'raw.githack.com' para intentar 
+                    "forzar" a GitHub a que le sirva el video a Chrome de 
+                    la manera correcta.
+                    
+                    También he añadido una segunda fuente (Plan B) que busca un
+                    archivo .mp4. Si conviertes tu video a .mp4 y lo subes
+                    a GitHub con el mismo nombre, es muy probable que funcione.
                 -->
                 <div class="video-container">
-                   <!-- 
-                       ¡Enlace actualizado!
-                       Estoy usando la URL "raw" (directa) del archivo en GitHub.
-                       La URL que pasaste era la página de GitHub, no el video en sí.
-
-                       NOTA: Los archivos .mov (QuickTime) pueden no funcionar en 
-                       navegadores como Chrome o Edge. Si no se reproduce,
-                       la solución de YouTube o convertirlo a .mp4 es la más segura.
-                   -->
                    <video controls poster="https://placehold.co/700x394/003b6f/ffffff?text=Video+de+Resumen">
-                        <source src="https://raw.githubusercontent.com/luisonyturbe/espanolt1/main/Cómo_Construir_con_Palabras.mov" type="video/quicktime">
-                        Tu navegador no soporta este video.
+                        
+                        <!-- 
+                            Intento 1 (El "Truco"): 
+                            Usar githack.com para el .mov
+                        -->
+                        <source src="https://raw.githack.com/luisonyturbe/espanolt1/main/Cómo_Construir_con_Palabras.mov" type="video/quicktime">
+                        
+                        <!-- 
+                            Intento 2 (Plan B - Recomendado): 
+                            El navegador intentará buscar un .mp4 si el .mov falla.
+                            Si conviertes tu video a .mp4 y lo subes, esto funcionará.
+                        -->
+                        <source src="https://raw.githack.com/luisonyturbe/espanolt1/main/Cómo_Construir_con_Palabras.mp4" type="video/mp4">
+                        
+                        Tu navegador no soporta este video. 
+                        (Si no se ve, la solución definitiva es usar YouTube 
+                        o convertir el video a .mp4 y subirlo).
                     </video>
                 </div>
             </section>
             
             <nav class="main-nav">
                 <h2>Temario</h2>
-                <!-- Los enlaces ahora llaman a la función JavaScript showPage() -->
-                <a href="#" onclick="showPage('page-tema1-2')" class="nav-button">TEMA 1 Y 2. TEXTOS DESCRIPTIVOS, EXPOSITIVOS Y ARGUMENTATIVOS.</a>
-                <a href="#" onclick="showPage('page-tema3')" class="nav-button">TEMA 3. ESTRUCTURA DE UNA NARRACIÓN Y UNA OBRA DRAMÁTICA.</a>
-                <a href="#" onclick="showPage('page-tema4')" class="nav-button">TEMA 4. FUNCIONES ESTÉTICAS Y SIMBÓLICAS.</a>
-                <a href="#" onclick="showPage('page-tema5')" class="nav-button">TEMA 5. TEMAS LITERARIOS EN TEXTOS NARRATIVOS, LÍRICOS Y DRAMÁTICOS.</a>
-                <a href="#" onclick="showPage('page-tema6-7')" class="nav-button">TEMA 6 Y 7. ELEMENTOS BÁSICOS DE DOCUMENTOS LEGALES Y ADMINISTRATIVOS SENCILLOS.</a>
-                <a href="#" onclick="showPage('page-tema8')" class="nav-button">TEMA 8. ARTÍCULO DE OPINIÓN</a>
-                <a href="#" onclick="showPage('page-tema9')" class="nav-button">TEMA 9. REGLAS DE SINTAXIS Y MORFOLOGÍA.</a>
-                <a href="#" onclick="showPage('page-tema10')" class="nav-button">TEMA 10. COHESIÓN EN TEXTOS</a>
+                <button onclick="navigateToPage('page-tema1-2')" class="nav-button">TEMA 1 Y 2. TEXTOS DESCRIPTIVOS, EXPOSITIVOS Y ARGUMENTATIVOS.</button>
+                <button onclick="navigateToPage('page-tema3')" class="nav-button">TEMA 3. ESTRUCTURA DE UNA NARRACIÓN Y UNA OBRA DRAMÁTICA.</button>
+                <button onclick="navigateToPage('page-tema4')" class="nav-button">TEMA 4. FUNCIONES ESTÉTICAS Y SIMBÓLICAS.</button>
+                <button onclick="navigateToPage('page-tema5')" class="nav-button">TEMA 5. TEMAS LITERARIOS EN TEXTOS NARRATIVOS, LÍRICOS Y DRAMÁTICOS.</button>
+                <button onclick="navigateToPage('page-tema6-7')" class="nav-button">TEMA 6 Y 7. ELEMENTOS BÁSICOS DE DOCUMENTOS LEGALES Y ADMINISTRATIVOS SENCILLOS.</button>
+                <button onclick="navigateToPage('page-tema8')" class="nav-button">TEMA 8. ARTÍCULO DE OPINIÓN</button>
+                <button onclick="navigateToPage('page-tema9')" class="nav-button">TEMA 9. REGLAS DE SINTAXIS Y MORFOLOGÍA.</button>
+                <button onclick="navigateToPage('page-tema10')" class="nav-button">TEMA 10. COHESIÓN EN TEXTOS</button>
             </nav>
             
             <section class="general-quiz">
                 <h2>Evaluación General</h2>
                 <p>¿Listo para probar todo lo que aprendiste? Realiza el examen general.</p>
-                <!-- Este enlace ahora llama a la función startQuiz() -->
-                <a href="#" onclick="startQuiz('general')" class="quiz-button general">Realizar Quiz General (20 Preguntas)</a>
+                <button onclick="navigateToPage('page-quiz', 'general')" class="quiz-button general">Realizar Quiz General (20 Preguntas)</button>
             </section>
         </main>
         
@@ -386,15 +413,12 @@
             <p>Guía de estudio para 2° de Secundaria</p>
         </footer>
     </div>
-    
-    <!-- 
-      CONTENEDOR PÁGINA 2: TEMA 1 Y 2
-    -->
-    <div id="page-tema1-2" class="page-content">
+
+    <!-- ========== PÁGINA TEMA 1-2 ========== -->
+    <div id="page-tema1-2" class="page">
         <header>
             <h1>TEMA 1 Y 2. TEXTOS DESCRIPTIVOS, EXPOSITIVOS Y ARGUMENTATIVOS.</h1>
         </header>
-
         <main>
             <section class="content-section">
                 <p>Para comprender mejor un texto, es clave distinguir <strong>ideas principales</strong> (la columna vertebral) y <strong>secundarias</strong> (que apoyan o desarrollan las principales).</p>
@@ -403,7 +427,6 @@
                     <li>Los <strong>textos expositivos</strong> se enfocan en <strong>informar objetivamente</strong>, mientras que los <strong>argumentativos</strong> buscan <strong>persuadir</strong>, presentando una estructura de introducción, cuerpo y conclusión para defender una postura.</li>
                 </ul>
             </section>
-
             <section class="content-section">
                 <h2>Relaciones entre ideas principales y secundarias</h2>
                 <h3>Idea principal</h3>
@@ -412,7 +435,6 @@
                 <p>Son los detalles que apoyan, explican o desarrollan la idea principal.</p>
                 <p><strong>Cómo evaluarlas:</strong> Busca la idea central de cada párrafo. Las ideas secundarias se presentan para dar contexto o sustentar la idea principal.</p>
             </section>
-
             <section class="content-section">
                 <h2>Diferencia información sustentada de opiniones</h2>
                 <h3>Información sustentada</h3>
@@ -421,7 +443,6 @@
                 <p>Puntos de vista personales, creencias o juicios del autor, que no siempre tienen un sustento objetivo.</p>
                 <p><strong>Cómo distinguirlas:</strong> Busca frases que presenten una postura o juicio ("creo que", "opino que") frente a frases que describen o informan. Los argumentos lógicos y los ejemplos son formas de sustentar opiniones.</p>
             </section>
-
             <section class="content-section">
                 <h2>La estructura de textos expositivos y argumentativos</h2>
                 <h3>Textos Expositivos</h3>
@@ -437,7 +458,6 @@
                     <li><strong>Organización:</strong> Más compleja, con argumentos que apoyan la tesis para convencer.</li>
                 </ul>
             </section>
-            
             <section class="content-section">
                 <h2>Los recursos textuales para el contenido</h2>
                 <h3>Ejemplos y explicaciones</h3>
@@ -447,14 +467,12 @@
                 <h3>Valor de la pertinencia</h3>
                 <p>Evalúa si el recurso es necesario para la comprensión o si añade valor al texto, o si es un distractor. Un buen recurso textual debe ser claro, conciso y estar bien integrado con el contenido.</p>
             </section>
-
             <section class="content-section">
                 <h2>Uso de conectores discursivos</h2>
                 <p><strong>¿Qué son?</strong> Palabras o expresiones que enlazan oraciones, párrafos y diferentes ideas, estableciendo relaciones lógicas (causa-consecuencia, adición, contraste).</p>
                 <p><strong>¿Por qué?</strong> Garantizan la cohesión y fluidez del texto, facilitando la comprensión de las relaciones entre las ideas.</p>
                 <p><strong>Ejemplo:</strong> "La sequía está afectando la producción de los cultivos; <strong>sin embargo</strong>, las inundaciones también representan un problema grave para la agricultura." Otros ejemplos: "<strong>Además</strong>, la escasez de agua...", "<strong>En consecuencia</strong>, muchos agricultores...".</p>
             </section>
-
             <section class="content-section">
                 <h2>Redacta explicaciones sobre elementos del tema</h2>
                 <p><strong>¿Qué es?</strong> Desarrollar cada punto del esquema con información detallada, definiendo conceptos, describiendo procesos o explicando causas y efectos.</p>
@@ -465,21 +483,18 @@
             <section class="quiz-link">
                 <h2>Ponte a Prueba</h2>
                 <p>Verifica lo que aprendiste sobre estos tipos de texto.</p>
-                <a href="#" onclick="startQuiz('tema1-2')" class="quiz-button">Realizar Quiz (5 Preguntas)</a>
+                <button onclick="navigateToPage('page-quiz', 'tema1-2')" class="quiz-button">Realizar Quiz (5 Preguntas)</button>
             </section>
             
-            <a href="#" onclick="showPage('page-main')" class="nav-button back-button">Volver al Temario</a>
+            <button onclick="navigateToPage('page-main')" class="nav-button back-button">Volver al Temario</button>
         </main>
     </div>
-    
-    <!-- 
-      CONTENEDOR PÁGINA 3: TEMA 3
-    -->
-    <div id="page-tema3" class="page-content">
+
+    <!-- ========== PÁGINA TEMA 3 ========== -->
+    <div id="page-tema3" class="page">
         <header>
             <h1>TEMA 3. ESTRUCTURA DE UNA NARRACIÓN Y UNA OBRA DRAMÁTICA.</h1>
         </header>
-
         <main>
             <section class="content-section">
                 <ul>
@@ -488,7 +503,6 @@
                     <li>El <strong>diálogo y los monólogos</strong> en el drama sirven para desarrollar la trama, revelar la personalidad de los personajes y exponer sus conflictos internos.</li>
                 </ul>
             </section>
-
             <section class="content-section">
                 <h2>Estructura: Narración vs. Drama</h2>
                 <table>
@@ -513,7 +527,6 @@
                     </tbody>
                 </table>
             </section>
-
             <section class="content-section">
                 <h2>Análisis de métrica, rima y verso libre</h2>
                 <h3>Métrica</h3>
@@ -523,7 +536,6 @@
                 <h3>Verso libre</h3>
                 <p>Es aquel que <strong>no está sujeto a métrica ni rima</strong>. Permite mayor libertad creativa y se enfoca en el significado.</p>
             </section>
-
             <section class="content-section">
                 <h2>Función del diálogo y los monólogos</h2>
                 <table>
@@ -550,21 +562,18 @@
             <section class="quiz-link">
                 <h2>Ponte a Prueba</h2>
                 <p>Verifica lo que aprendiste sobre narración y drama.</p>
-                <a href="#" onclick="startQuiz('tema3')" class="quiz-button">Realizar Quiz (5 Preguntas)</a>
+                <button onclick="navigateToPage('page-quiz', 'tema3')" class="quiz-button">Realizar Quiz (5 Preguntas)</button>
             </section>
             
-            <a href="#" onclick="showPage('page-main')" class="nav-button back-button">Volver al Temario</a>
+            <button onclick="navigateToPage('page-main')" class="nav-button back-button">Volver al Temario</button>
         </main>
     </div>
-    
-    <!-- 
-      CONTENEDOR PÁGINA 4: TEMA 4
-    -->
-    <div id="page-tema4" class="page-content">
+
+    <!-- ========== PÁGINA TEMA 4 ========== -->
+    <div id="page-tema4" class="page">
         <header>
             <h1>TEMA 4. FUNCIONES ESTÉTICAS Y SIMBÓLICAS.</h1>
         </header>
-
         <main>
             <section class="content-section">
                 <h2>¿Qué son los recursos literarios y para qué sirven?</h2>
@@ -576,7 +585,6 @@
                     <li><strong>Dar más significado</strong> (mostrar ideas profundas o abstractas).</li>
                 </ul>
             </section>
-
             <section class="content-section">
                 <h2>Funciones de los recursos literarios</h2>
                 <h3>Funciones estéticas</h3>
@@ -595,7 +603,6 @@
                     <li><strong>Transmitir emociones:</strong> Un paisaje oscuro puede hacer sentir tristeza o miedo.</li>
                 </ul>
             </section>
-
             <section class="content-section">
                 <h2>¿Cómo se usan en cada tipo de texto?</h2>
                 <ul>
@@ -604,7 +611,6 @@
                     <li><strong>En obras de teatro (dramáticos):</strong> Se usan <strong>acotaciones</strong> (instrucciones que indican cómo actuar). Ejemplo: <em>(grita con enojo)</em>.</li>
                 </ul>
             </section>
-            
             <section class="content-section">
                 <h2>Indicadores para analizar los textos</h2>
                 <ol>
@@ -636,21 +642,18 @@
             <section class="quiz-link">
                 <h2>Ponte a Prueba</h2>
                 <p>Verifica lo que aprendiste sobre las funciones del lenguaje.</p>
-                <a href="#" onclick="startQuiz('tema4')" class="quiz-button">Realizar Quiz (5 Preguntas)</a>
+                <button onclick="navigateToPage('page-quiz', 'tema4')" class="quiz-button">Realizar Quiz (5 Preguntas)</button>
             </section>
             
-            <a href="#" onclick="showPage('page-main')" class="nav-button back-button">Volver al Temario</a>
+            <button onclick="navigateToPage('page-main')" class="nav-button back-button">Volver al Temario</button>
         </main>
     </div>
-    
-    <!-- 
-      CONTENEDOR PÁGINA 5: TEMA 5
-    -->
-    <div id="page-tema5" class="page-content">
+
+    <!-- ========== PÁGINA TEMA 5 ========== -->
+    <div id="page-tema5" class="page">
         <header>
             <h1>TEMA 5. TEMAS LITERARIOS EN TEXTOS NARRATIVOS, LÍRICOS Y DRAMÁTICOS.</h1>
         </header>
-
         <main>
             <section class="content-section">
                 <p>Este tema analiza cómo los temas de las obras literarias (novelas, poemas, obras de teatro) se <strong>transforman al ser adaptados</strong> en otras formas de arte, como el cine, la pintura o la música.</p>
@@ -664,7 +667,6 @@
                     <li><strong>Transformaciones:</strong> Los cambios que el tema experimenta al pasar de un medio a otro.</li>
                 </ul>
             </section>
-
             <section class="content-section">
                 <h2>1. Representación de un tema en novela vs. cine</h2>
                 <h3>Novela:</h3>
@@ -678,7 +680,6 @@
                     <li><strong>Compresión y variación:</strong> Se debe reducir o resumir la historia para un tiempo limitado, lo que puede implicar la eliminación de tramas secundarias.</li>
                 </ul>
             </section>
-
             <section class="content-section">
                 <h2>2. Cambios estructurales entre obra teatral y adaptación cinematográfica</h2>
                 <h3>Obra teatral:</h3>
@@ -692,7 +693,6 @@
                     <li><strong>Recursos visuales:</strong> El cine puede usar recursos como el <strong>flashback</strong> o la superposición de imágenes para jugar con el tiempo y el espacio.</li>
                 </ul>
             </section>
-            
             <section class="content-section">
                 <h2>3. Diferencias en la representación de personajes en novela vs. obra de arte visual</h2>
                 <h3>Novela:</h3>
@@ -710,28 +710,24 @@
             <section class="quiz-link">
                 <h2>Ponte a Prueba</h2>
                 <p>Verifica lo que aprendiste sobre adaptaciones literarias.</p>
-                <a href="#" onclick="startQuiz('tema5')" class="quiz-button">Realizar Quiz (5 Preguntas)</a>
+                <button onclick="navigateToPage('page-quiz', 'tema5')" class="quiz-button">Realizar Quiz (5 Preguntas)</button>
             </section>
             
-            <a href="#" onclick="showPage('page-main')" class="nav-button back-button">Volver al Temario</a>
+            <button onclick="navigateToPage('page-main')" class="nav-button back-button">Volver al Temario</button>
         </main>
     </div>
-    
-    <!-- 
-      CONTENEDOR PÁGINA 6: TEMA 6 Y 7
-    -->
-    <div id="page-tema6-7" class="page-content">
+
+    <!-- ========== PÁGINA TEMA 6-7 ========== -->
+    <div id="page-tema6-7" class="page">
         <header>
             <h1>TEMA 6 Y 7. ELEMENTOS BÁSICOS DE DOCUMENTOS LEGALES Y ADMINISTRATIVOS SENCILLOS.</h1>
         </header>
-
         <main>
             <section class="content-section">
                 <p><strong>Contrato:</strong> es un acuerdo legal entre dos o más partes, donde cada una se compromete a dar, hacer o no hacer algo específico, creando así obligaciones y derechos.</p>
                 <p>Un contrato se compone de partes esenciales como <strong>cláusulas</strong> (definición de derechos y obligaciones), <strong>obligaciones</strong> (acciones concretas) y <strong>firmas</strong> (consentimiento).</p>
                 <p>La <strong>claridad y precisión</strong> en un acuerdo son vitales para que se cumplan las normas legales y se eviten malentendidos.</p>
             </section>
-
             <section class="content-section">
                 <h2>Partes Esenciales de un Contrato</h2>
                 <h3>Cláusulas</h3>
@@ -743,7 +739,6 @@
                 <h3>Firmas</h3>
                 <p>Es la manifestación del <strong>acuerdo y el consentimiento</strong> de las partes. Su propósito es validar que las partes están de acuerdo con los términos.</p>
             </section>
-
             <section class="content-section">
                 <h2>Análisis de la Redacción de un Acuerdo</h2>
                 <p>La redacción de un acuerdo legal se enfoca en presentar la información de forma que se cumplan las leyes. Incluye:</p>
@@ -754,7 +749,6 @@
                     <li><strong>Cumplimiento de la ley:</strong> El contenido debe estar alineado con la normativa legal vigente.</li>
                 </ul>
             </section>
-
             <section class="content-section">
                 <h2>Importancia de la Claridad y Precisión</h2>
                 <ul>
@@ -769,21 +763,18 @@
             <section class="quiz-link">
                 <h2>Ponte a Prueba</h2>
                 <p>Verifica lo que aprendiste sobre documentos legales.</p>
-                <a href="#" onclick="startQuiz('tema6-7')" class="quiz-button">Realizar Quiz (5 Preguntas)</a>
+                <button onclick="navigateToPage('page-quiz', 'tema6-7')" class="quiz-button">Realizar Quiz (5 Preguntas)</button>
             </section>
             
-            <a href="#" onclick="showPage('page-main')" class="nav-button back-button">Volver al Temario</a>
+            <button onclick="navigateToPage('page-main')" class="nav-button back-button">Volver al Temario</button>
         </main>
     </div>
-    
-    <!-- 
-      CONTENEDOR PÁGINA 7: TEMA 8
-    -->
-    <div id="page-tema8" class="page-content">
+
+    <!-- ========== PÁGINA TEMA 8 ========== -->
+    <div id="page-tema8" class="page">
         <header>
             <h1>TEMA 8. ARTÍCULO DE OPINIÓN</h1>
         </header>
-
         <main>
             <section class="content-section">
                 <h2>¿Qué es un artículo de opinión?</h2>
@@ -800,14 +791,12 @@
                     <li><strong>Contraste:</strong> “sin embargo”, “aunque”. Señalan una contradicción.</li>
                 </ul>
             </section>
-            
             <section class="content-section">
                 <h2>¿Qué es una presentación de proyecto grupal?</h2>
                 <p>Es una exposición oral o escrita en la que se presentan los resultados de una investigación realizada en equipo.</p>
                 <p>Se recomienda usar <strong>vocabulario técnico</strong>, que es el conjunto de palabras y expresiones específicas de un área de conocimiento (ej. "hipótesis" en ciencias, "metáfora" en literatura). Sirve para comunicar ideas con precisión.</p>
                 <p>También se debe organizar la información con <strong>claridad</strong> (fácil de entender) y <strong>coherencia</strong> (relación lógica entre ideas).</p>
             </section>
-
             <section class="content-section">
                 <h2>¿Qué es un debate?</h2>
                 <p>Es una <strong>discusión formal</strong> entre dos o más personas que defienden <strong>posturas opuestas</strong> sobre un tema. El tema debe ser polémico (que permita opiniones a favor y en contra).</p>
@@ -826,12 +815,10 @@
                     <li><strong>Público (opcional):</strong> Escucha o hace preguntas.</li>
                 </ul>
             </section>
-            
             <section class="content-section">
                 <h2>¿Qué es un texto descriptivo?</h2>
                 <p>Es un texto que <strong>detalla las características</strong> de personas, lugares, objetos o situaciones, utilizando un lenguaje claro y ordenado. Se recomienda usar conectores de orden (en primer lugar, luego, por último) e incluir detalles sensoriales.</p>
             </section>
-            
             <section class="content-section">
                 <h2>Produce la reseña de un libro</h2>
                 <p><strong>¿Qué es una reseña?</strong> Es un texto que <strong>resume, analiza y valora</strong> una obra literaria, destacando sus aspectos más importantes.</p>
@@ -848,21 +835,18 @@
             <section class="quiz-link">
                 <h2>Ponte a Prueba</h2>
                 <p>Verifica lo que aprendiste sobre opinión, debate y reseñas.</p>
-                <a href="#" onclick="startQuiz('tema8')" class="quiz-button">Realizar Quiz (5 Preguntas)</a>
+                <button onclick="navigateToPage('page-quiz', 'tema8')" class="quiz-button">Realizar Quiz (5 Preguntas)</button>
             </section>
             
-            <a href="#" onclick="showPage('page-main')" class="nav-button back-button">Volver al Temario</a>
+            <button onclick="navigateToPage('page-main')" class="nav-button back-button">Volver al Temario</button>
         </main>
     </div>
-    
-    <!-- 
-      CONTENEDOR PÁGINA 8: TEMA 9
-    -->
-    <div id="page-tema9" class="page-content">
+
+    <!-- ========== PÁGINA TEMA 9 ========== -->
+    <div id="page-tema9" class="page">
         <header>
             <h1>TEMA 9. REGLAS DE SINTAXIS Y MORFOLOGÍA.</h1>
         </header>
-
         <main>
             <section class="content-section">
                 <h2>Sintaxis</h2>
@@ -872,7 +856,6 @@
                     <li>Correcto: “María lee un libro.”</li>
                 </ul>
             </section>
-
             <section class="content-section">
                 <h2>Morfología</h2>
                 <p>Es la parte de la gramática que estudia la <strong>estructura y forma de las palabras</strong>, cómo se forman y cómo cambian.</p>
@@ -883,7 +866,6 @@
                     <li>“<strong>-s</strong>” → indica plural</li>
                 </ul>
             </section>
-
             <section class="content-section">
                 <h2>Oraciones y Términos Técnicos</h2>
                 <p>Una <strong>oración completa</strong> tiene sujeto y predicado. Una oración incompleta o mal estructurada confunde al lector.</p>
@@ -907,7 +889,6 @@
                     </tbody>
                 </table>
             </section>
-            
             <section class="content-section">
                 <h2>Concordancia entre los tiempos verbales</h2>
                 <p>La <strong>concordancia verbal</strong> se refiere a la relación entre el sujeto y el verbo, asegurando que coincidan en <strong>número</strong> (singular o plural) y <strong>persona</strong>.</p>
@@ -918,21 +899,18 @@
             <section class="quiz-link">
                 <h2>Ponte a Prueba</h2>
                 <p>Verifica lo que aprendiste sobre sintaxis y morfología.</p>
-                <a href="#" onclick="startQuiz('tema9')" class="quiz-button">Realizar Quiz (5 Preguntas)</a>
+                <button onclick="navigateToPage('page-quiz', 'tema9')" class="quiz-button">Realizar Quiz (5 Preguntas)</button>
             </section>
             
-            <a href="#" onclick="showPage('page-main')" class="nav-button back-button">Volver al Temario</a>
+            <button onclick="navigateToPage('page-main')" class="nav-button back-button">Volver al Temario</button>
         </main>
     </div>
-    
-    <!-- 
-      CONTENEDOR PÁGINA 9: TEMA 10
-    -->
-    <div id="page-tema10" class="page-content">
+
+    <!-- ========== PÁGINA TEMA 10 ========== -->
+    <div id="page-tema10" class="page">
         <header>
             <h1>TEMA 10. COHESIÓN EN TEXTOS</h1>
         </header>
-
         <main>
             <section class="content-section">
                 <h2>Conectores discursivos</h2>
@@ -964,7 +942,6 @@
                     </tbody>
                 </table>
             </section>
-
             <section class="content-section">
                 <h2>Signos de puntuación para organizar ideas</h2>
                 <p><strong>¿Para qué sirven?</strong> Ayudan a ordenar las ideas, dar claridad al texto y jerarquizar la información.</p>
@@ -995,7 +972,7 @@
                         <tr>
                             <td><strong>;</strong> (Punto y coma)</td>
                             <td>Separa ideas relacionadas.</td>
-                            <td>"Estudié mucho; aprobó el examen."</td>
+                            <td>"Estudié mucho; aprobé el examen."</td>
                         </tr>
                     </tbody>
                 </table>
@@ -1005,22 +982,18 @@
             <section class="quiz-link">
                 <h2>Ponte a Prueba</h2>
                 <p>Verifica lo que aprendiste sobre la cohesión textual.</p>
-                <a href="#" onclick="startQuiz('tema10')" class="quiz-button">Realizar Quiz (5 Preguntas)</a>
+                <button onclick="navigateToPage('page-quiz', 'tema10')" class="quiz-button">Realizar Quiz (5 Preguntas)</button>
             </section>
             
-            <a href="#" onclick="showPage('page-main')" class="nav-button back-button">Volver al Temario</a>
+            <button onclick="navigateToPage('page-main')" class="nav-button back-button">Volver al Temario</button>
         </main>
     </div>
-    
-    
-    <!-- 
-      CONTENEDOR PÁGINA 10: QUIZ
-    -->
-    <div id="page-quiz" class="page-content">
+
+    <!-- ========== PÁGINA DE QUIZ (Genérica) ========== -->
+    <div id="page-quiz" class="page">
         <header>
             <h1 id="quiz-title">Quiz de Español</h1>
         </header>
-
         <main>
             <div class="quiz-container" id="quiz-container">
                 <div id="question-header">
@@ -1030,7 +1003,7 @@
                 <ul id="options-container">
                     <!-- Las opciones se generarán con JavaScript -->
                 </ul>
-                <button id="submit-btn">Siguiente</button>
+                <button id="submit-btn" class="quiz-button">Siguiente</button>
             </div>
 
             <div class="results-container" id="results-container" style="display: none;">
@@ -1040,18 +1013,58 @@
                     <h3>Respuestas incorrectas:</h3>
                     <!-- Aquí se listarán las preguntas falladas -->
                 </div>
-                <!-- Este botón ahora usa JavaScript para volver -->
-                <a href="#" onclick="showPage('page-main')" class="nav-button">Volver al inicio</a>
+                <button onclick="navigateToPage('page-main')" class="nav-button back-button">Volver al inicio</button>
             </div>
         </main>
     </div>
 
 
     <!-- 
-      SCRIPT 1: BASE DE DATOS DE PREGUNTAS
-      Todo el contenido de 'quiz-data.js' está aquí.
+        *****************************************************
+        SCRIPT (Lógica de la página)
+        *****************************************************
+        Todo el JavaScript está integrado aquí.
+        Maneja la navegación de páginas y la lógica del quiz.
     -->
-    <script id="quiz-database">
+    <script>
+        // --- 1. LÓGICA DE NAVEGACIÓN ---
+        
+        let currentPage = 'page-main';
+        
+        function showPage(pageId) {
+            // Ocultar todas las páginas
+            document.querySelectorAll('.page').forEach(page => {
+                page.classList.remove('active');
+            });
+            // Mostrar la página solicitada
+            const newPage = document.getElementById(pageId);
+            if (newPage) {
+                newPage.classList.add('active');
+                currentPage = pageId;
+                window.scrollTo(0, 0); // Subir al inicio de la página
+            } else {
+                console.error("No se encontró la página:", pageId);
+                document.getElementById('page-main').classList.add('active'); // Volver al inicio si hay error
+            }
+        }
+
+        function navigateToPage(pageId, quizId = null) {
+            if (pageId === 'page-quiz') {
+                // Si vamos a un quiz, iniciamos la lógica del quiz
+                loadQuiz(quizId);
+            }
+            // Cambiamos a la página visualmente
+            showPage(pageId);
+        }
+
+        // Mostrar la página principal al cargar
+        document.addEventListener('DOMContentLoaded', () => {
+            showPage('page-main');
+        });
+
+
+        // --- 2. BASE DE DATOS DE PREGUNTAS ---
+
         const allQuestions = {
             "tema1-2": {
                 "title": "Quiz: Textos Descriptivos, Expositivos y Argumentativos",
@@ -1092,7 +1105,7 @@
                             "La información sustentada son creencias y la opinión son datos.",
                             "No hay diferencia, ambas son lo mismo.",
                             "La información sustentada se basa en hechos verificables y datos, la opinión es un punto de vista personal.",
-                            "La información sustentada usa \"creo que\" y la opinión no."
+                            "La información sustentada usa \"creo que\" y la opinión usa \"según la fuente\"."
                         ],
                         "answer": "La información sustentada se basa en hechos verificables y datos, la opinión es un punto de vista personal."
                     },
@@ -1619,34 +1632,9 @@
                 ...allQuestions["tema10"].questions
             ]
         };
-    </script>
 
-    <!-- 
-      SCRIPT 2: LÓGICA PRINCIPAL
-      Todo el contenido de 'script.js' está aquí, 
-      más la lógica para navegar entre "páginas".
-    -->
-    <script id="main-logic">
-        
-        // --- Sistema de Navegación de Páginas ---
-        function showPage(pageId) {
-            // Oculta todas las secciones de contenido
-            document.querySelectorAll('.page-content').forEach(page => {
-                page.style.display = 'none';
-            });
 
-            // Muestra la página solicitada
-            const targetPage = document.getElementById(pageId);
-            if (targetPage) {
-                targetPage.style.display = 'block';
-                window.scrollTo(0, 0); // Sube al inicio de la página
-            } else {
-                console.error('Error: Página no encontrada', pageId);
-                document.getElementById('page-main').style.display = 'block'; // Mostrar inicio como fallback
-            }
-        }
-
-        // --- Lógica del Quiz ---
+        // --- 3. LÓGICA DEL QUIZ ---
 
         // Variables globales para el estado del quiz
         let currentQuestions = [];
@@ -1654,9 +1642,9 @@
         let userAnswers = [];
         let score = 0;
         let totalQuestions = 0;
+        let currentQuizId = '';
 
-        // Referencias a elementos del DOM del Quiz
-        // (Se definen aquí una vez para no buscarlos repetidamente)
+        // Elementos del DOM para el Quiz (los buscamos una sola vez)
         const quizContainer = document.getElementById('quiz-container');
         const resultsContainer = document.getElementById('results-container');
         const quizTitle = document.getElementById('quiz-title');
@@ -1667,33 +1655,17 @@
         const resultsScore = document.getElementById('results-score');
         const incorrectAnswersList = document.getElementById('incorrect-answers');
 
-        /**
-         * Función para iniciar un nuevo quiz.
-         * Es llamada por los botones "Realizar Quiz".
-         */
-        function startQuiz(quizId) {
-            // 1. Reiniciar el estado visual del quiz
-            resultsContainer.style.display = 'none';
-            quizContainer.style.display = 'block';
-            
-            // 2. Limpiar la lista de respuestas incorrectas de la vez anterior
-            // (Importante para quizzes subsecuentes)
-            const incorrectListContent = document.querySelector('#incorrect-answers ul');
-            if (incorrectListContent) {
-                incorrectListContent.remove();
+        // Función para mezclar un array (Algoritmo Fisher-Yates)
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
             }
-
-            // 3. Mostrar la "página" del quiz
-            showPage('page-quiz');
-            
-            // 4. Cargar la lógica y datos del quiz
-            loadQuizLogic(quizId);
+            return array;
         }
 
-        /**
-         * Carga los datos del quiz, mezcla preguntas y muestra la primera.
-         */
-        function loadQuizLogic(quizId) {
+        // Función para cargar el quiz
+        function loadQuiz(quizId) {
             if (!quizId || !allQuestions[quizId]) {
                 quizTitle.textContent = "Error";
                 questionText.textContent = "No se encontró el quiz solicitado. Por favor, vuelve al inicio.";
@@ -1701,56 +1673,54 @@
                 return;
             }
             
-            submitBtn.style.display = 'block'; // Asegurarse que el botón sea visible
+            currentQuizId = quizId;
             const quizData = allQuestions[quizId];
             quizTitle.textContent = quizData.title;
             
-            // Copia y mezcla las preguntas
-            let questionsToLoad = shuffleArray([...quizData.questions]); 
+            // Mostrar quiz y ocultar resultados
+            quizContainer.style.display = 'block';
+            resultsContainer.style.display = 'none';
+            submitBtn.style.display = 'block';
             
-            // Define cuántas preguntas usar
+            // Seleccionar preguntas aleatoriamente
+            let questionsToLoad = shuffleArray([...quizData.questions]); // Copia y mezcla
+            
             if (quizId === 'general') {
                 totalQuestions = 20;
-                currentQuestions = questionsToLoad.slice(0, 20);
+                currentQuestions = questionsToLoad.slice(0, 20); // Tomar 20
             } else {
                 totalQuestions = 5;
-                currentQuestions = questionsToLoad.slice(0, 5);
+                currentQuestions = questionsToLoad.slice(0, 5); // Tomar 5
             }
 
-            // Resetea contadores y respuestas
             userAnswers = new Array(totalQuestions).fill(null);
             currentQuestionIndex = 0;
             score = 0;
 
-            // Muestra la primera pregunta
             showQuestion();
         }
 
-        /**
-         * Muestra la pregunta actual y sus opciones (mezcladas).
-         */
+        // Función para mostrar la pregunta actual
         function showQuestion() {
-            deselectOptions(); // Limpia la selección anterior
+            // Deseleccionar opciones anteriores
+            deselectOptions();
 
             const questionData = currentQuestions[currentQuestionIndex];
             
-            // Mezcla las opciones de esta pregunta
+            // Mezclar las opciones de esta pregunta
             let shuffledOptions = shuffleArray([...questionData.options]);
             
             questionText.textContent = questionData.question;
             questionCounter.textContent = `Pregunta ${currentQuestionIndex + 1} de ${totalQuestions}`;
-            optionsContainer.innerHTML = ''; // Limpia opciones anteriores
+            optionsContainer.innerHTML = '';
 
-            // Crea los <li> para cada opción
             shuffledOptions.forEach(option => {
                 const li = document.createElement('li');
                 li.textContent = option;
-                // Guarda la respuesta seleccionada al hacer clic
-                li.addEventListener('click', () => selectOption(li, option));
+                li.onclick = () => selectOption(li, option);
                 optionsContainer.appendChild(li);
             });
 
-            // Cambia el texto del botón si es la última pregunta
             if (currentQuestionIndex === totalQuestions - 1) {
                 submitBtn.textContent = 'Finalizar Quiz';
             } else {
@@ -1758,18 +1728,14 @@
             }
         }
 
-        /**
-         * Guarda la respuesta del usuario y marca la opción como 'seleccionada'.
-         */
+        // Función para seleccionar una opción
         function selectOption(selectedLi, option) {
-            deselectOptions(); // Quita 'selected' de otras opciones
+            deselectOptions();
             selectedLi.classList.add('selected');
-            userAnswers[currentQuestionIndex] = option; // Guarda la respuesta
+            userAnswers[currentQuestionIndex] = option;
         }
 
-        /**
-         * Quita la clase 'selected' de todos los <li> de opciones.
-         */
+        // Función para quitar la clase 'selected' de todas las opciones
         function deselectOptions() {
             const options = optionsContainer.getElementsByTagName('li');
             Array.from(options).forEach(option => {
@@ -1777,9 +1743,31 @@
             });
         }
 
-        /**
-         * Muestra la pantalla de resultados finales.
-         */
+        // Event Listener para el botón de Siguiente/Finalizar
+        submitBtn.addEventListener('click', () => {
+            const selectedOption = userAnswers[currentQuestionIndex];
+            
+            if (selectedOption === null) {
+                // Usamos un modal simple en lugar de alert()
+                showSimpleModal('Por favor, selecciona una respuesta.');
+                return;
+            }
+
+            // Revisar si la respuesta es correcta
+            if (selectedOption === currentQuestions[currentQuestionIndex].answer) {
+                score++;
+            }
+
+            currentQuestionIndex++;
+
+            if (currentQuestionIndex < totalQuestions) {
+                showQuestion();
+            } else {
+                showResults();
+            }
+        });
+
+        // Función para mostrar los resultados finales
         function showResults() {
             quizContainer.style.display = 'none';
             resultsContainer.style.display = 'block';
@@ -1787,11 +1775,10 @@
             resultsScore.textContent = `Obtuviste ${score} de ${totalQuestions} correctas.`;
 
             let incorrectHtml = '<ul>';
-            let hasIncorrectAnswers = false;
-            
+            let hasIncorrect = false;
             currentQuestions.forEach((question, index) => {
                 if (userAnswers[index] !== question.answer) {
-                    hasIncorrectAnswers = true;
+                    hasIncorrect = true;
                     incorrectHtml += `
                         <li>
                             <p class="question">${index + 1}. ${question.question}</p>
@@ -1803,68 +1790,24 @@
             });
             incorrectHtml += '</ul>';
 
-            if (!hasIncorrectAnswers) {
-                // Mensaje si todo es correcto
-                const h3 = incorrectAnswersList.querySelector('h3');
-                if (h3) h3.innerHTML = '<h3>¡Felicidades! ¡Todas tus respuestas son correctas!</h3>';
+            // Limpiar resultados anteriores y añadir los nuevos
+            incorrectAnswersList.innerHTML = '<h3>Respuestas incorrectas:</h3>'; // Reset
+            
+            if (!hasIncorrect) {
+                incorrectAnswersList.innerHTML = '<h3>¡Felicidades! ¡Todas tus respuestas son correctas!</h3>';
             } else {
-                // Muestra la lista de respuestas incorrectas
-                const h3 = incorrectAnswersList.querySelector('h3');
-                if (h3) h3.innerHTML = '<h3>Respuestas incorrectas:</h3>';
                 incorrectAnswersList.innerHTML += incorrectHtml;
             }
         }
 
-        /**
-         * Función para mezclar un array (Algoritmo Fisher-Yates).
-         */
-        function shuffleArray(array) {
-            for (let i = array.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [array[i], array[j]] = [array[j], array[i]];
-            }
-            return array;
+        // Función de modal simple para evitar alert()
+        function showSimpleModal(message) {
+            // (Esta es una implementación muy simple, se podría mejorar)
+            console.warn("ALERTA: " + message);
+            // Podríamos crear un div modal, pero por ahora, un console.warn es seguro.
         }
-
-        // --- INICIALIZACIÓN DE LA PÁGINA ---
-        
-        document.addEventListener('DOMContentLoaded', () => {
-            
-            // 1. Mostrar la página principal al cargar
-            showPage('page-main');
-            
-            // 2. Configurar el botón "Siguiente" del quiz UNA SOLA VEZ
-            submitBtn.addEventListener('click', () => {
-                const selectedOption = userAnswers[currentQuestionIndex];
-                
-                // Evita avanzar sin seleccionar
-                if (selectedOption === null && currentQuestionIndex < totalQuestions) {
-                    // No usamos alert()
-                    console.warn('Selecciona una respuesta'); 
-                    // Podríamos añadir un mensaje visual aquí
-                    return; 
-                }
-
-                // Revisa la respuesta (si no se ha contestado, se califica como incorrecta)
-                if (selectedOption === currentQuestions[currentQuestionIndex].answer) {
-                    score++;
-                }
-
-                currentQuestionIndex++; // Avanza a la siguiente pregunta
-
-                // Decide si mostrar otra pregunta o los resultados
-                if (currentQuestionIndex < totalQuestions) {
-                    showQuestion();
-                } else {
-                    showResults();
-                }
-            });
-        });
 
     </script>
 </body>
 </html>
-
-
-
 
