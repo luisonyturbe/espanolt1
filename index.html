@@ -356,37 +356,22 @@
                 
                 <!-- 
                     *****************************************************
-                    AQUÍ ESTÁ LA CORRECCIÓN / EL "TRUCO" PARA EL VIDEO
+                    CAMBIO REALIZADO: Video de YouTube
                     *****************************************************
                     
-                    He aplicado el truco de 'raw.githack.com' para intentar 
-                    "forzar" a GitHub a que le sirva el video a Chrome de 
-                    la manera correcta.
-                    
-                    También he añadido una segunda fuente (Plan B) que busca un
-                    archivo .mp4. Si conviertes tu video a .mp4 y lo subes
-                    a GitHub con el mismo nombre, es muy probable que funcione.
+                    Reemplazamos el <video> que apuntaba a GitHub
+                    por este <iframe> que apunta a YouTube.
+                    El CSS en <style> se encarga de que sea responsivo.
                 -->
                 <div class="video-container">
-                   <video controls poster="https://placehold.co/700x394/003b6f/ffffff?text=Video+de+Resumen">
-                        
-                        <!-- 
-                            Intento 1 (El "Truco"): 
-                            Usar githack.com para el .mov
-                        -->
-                        <source src="https://raw.githack.com/luisonyturbe/espanolt1/main/Cómo_Construir_con_Palabras.mov" type="video/quicktime">
-                        
-                        <!-- 
-                            Intento 2 (Plan B - Recomendado): 
-                            El navegador intentará buscar un .mp4 si el .mov falla.
-                            Si conviertes tu video a .mp4 y lo subes, esto funcionará.
-                        -->
-                        <source src="https://raw.githack.com/luisonyturbe/espanolt1/main/Cómo_Construir_con_Palabras.mp4" type="video/mp4">
-                        
-                        Tu navegador no soporta este video. 
-                        (Si no se ve, la solución definitiva es usar YouTube 
-                        o convertir el video a .mp4 y subirlo).
-                    </video>
+                   <iframe 
+                        src="https://www.youtube.com/embed/YJrPEOiWx-Q" 
+                        title="Video de Resumen de Español" 
+                        frameborder="0" 
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                        referrerpolicy="strict-origin-when-cross-origin" 
+                        allowfullscreen>
+                    </iframe>
                 </div>
             </section>
             
